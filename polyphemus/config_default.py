@@ -55,7 +55,7 @@ LOG_PREVIEW_LINES = 32
 COMPILE_TIMEOUT = 120
 SYNTHESIS_TIMEOUT = 20000
 
-# The Buildbot currently supports two backend toolchains: Xilinx's SDSoC
+# Polyphemus currently supports two backend toolchains: Xilinx's SDSoC
 # (for Zynq processors) and SDAccel (for AWS F1). Set this to "f1" for
 # deployment on F1; leave it as anything else for the SDSoC workflow.
 TOOLCHAIN = 'f1'

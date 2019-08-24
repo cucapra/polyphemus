@@ -13,8 +13,8 @@ from . import state
 app = flask.Flask(__name__, instance_relative_config=True)
 
 # Configuration. We include some defaults and allow overrides.
-app.config.from_object('buildbot.config_default')
-app.config.from_pyfile('buildbot.cfg', silent=True)
+app.config.from_object('polyphemus.config_default')
+app.config.from_pyfile('polyphemus.cfg', silent=True)
 
 # Use worker threads by default in development.
 if app.config['WORKER_THREADS'] is None:

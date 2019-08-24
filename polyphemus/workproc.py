@@ -26,8 +26,8 @@ class WorkProc:
         # Load the configuration. We're just reusing Flask's simple
         # configuration component here.
         self.config = Config(self.basedir)
-        self.config.from_object('buildbot.config_default')
-        self.config.from_pyfile('buildbot.cfg', silent=True)
+        self.config.from_object('polyphemus.config_default')
+        self.config.from_pyfile('polyphemus.cfg', silent=True)
 
         # Create the database.
         self.db = db or JobDB(self.basedir)
