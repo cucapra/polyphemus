@@ -1,8 +1,7 @@
-Seashell Buildbot
-=================
+Polyphemus
+==========
 
-This is a server for building and running Seashell programs on our infrastructure.
-
+A server for managing FPGA build and execution environments.
 
 Running the Buildbot
 --------------------
