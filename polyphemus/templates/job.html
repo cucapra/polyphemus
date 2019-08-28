@@ -22,8 +22,11 @@
             <input type="submit" value="Set">
         </form>
     </li>
+    <li>
+    <b>config:</b> <pre class="json"> {{ job.config }} </pre>
+    </li>
     {% for key, value in job.items() %}
-    {% if key not in ('started', 'state', 'name', 'log') %}
+    {% if key not in ('started', 'state', 'name', 'log', 'config') %}
     <li>
         <b>{{ key }}:</b>
         {{ value }}
