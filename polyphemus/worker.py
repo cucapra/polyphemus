@@ -236,8 +236,7 @@ def stage_make(db, config):
         if config['TOOLCHAIN'] == 'f1':
             # Get the AWS platform ID for F1 builds.
             platform_script = (
-                'cd $AWS_FPGA_REPO_DIR ; '
-                'source ./sdaccel_setup.sh > /dev/null ; '
+                'source $AWS_FPGA_REPO_DIR/sdaccel_setup.sh > /dev/null ; '
                 'echo $AWS_PLATFORM'
             )
             proc = task.run([platform_script], capture=True, shell=True)
@@ -375,10 +374,8 @@ def stage_afi(db, config):
 
         # Generate the AFI and AWS binary.
         afi_script = (
-            'cur=`pwd` ; '
-            'cd $AWS_FPGA_REPO_DIR ; '
-            'source ./sdaccel_setup.sh > /dev/null ; '
-            'cd $cur/xclbin ; '
+            'source $AWS_FPGA_REPO_DIR/sdaccel_setup.sh > /dev/null ; '
+            'cd xclbin ; '
             '$SDACCEL_DIR/tools/create_sdaccel_afi.sh '
             '-xclbin={} '
             '-s3_bucket={} '
