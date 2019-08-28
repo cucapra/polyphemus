@@ -187,20 +187,28 @@ def show_job(name):
         db.set_state(job, new_state)
         notify_workers(job['name'])
 
-    # Get the last few lines in the log.
+    # Construct regex for interesting words
+    interest_regex = re.compile('|'.join(app.config['IMPORTANT_WORDS']), re.I)
+
+    # Get the last few lines and interesting lines from the log.
     log_filename = db._log_path(name)
     lines = app.config['LOG_PREVIEW_LINES']
     try:
         with open(log_filename) as f:
-            log_lines = list(f)[-lines:]
+            file = list(f)
+            log_lines = file[-lines:]
+            interesting_lines = [l for l in file if interest_regex.search(l)]
     except IOError:
         log_lines = []
+        interesting_lines = []
+
 
     return flask.render_template(
         'job.html',
         job=job,
         status_strings=STATUS_STRINGS,
         log=''.join(log_lines),
+        interesting=''.join(interesting_lines),
     )
 
 

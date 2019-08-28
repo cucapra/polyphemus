@@ -69,3 +69,10 @@ S3_BUCKET = 'test-bucket-1025132741'
 S3_DCP = 'DCPs'  # dcp-folder-name
 S3_LOG = 'SDAccel_log'  # logs-folder-name
 AFI_CHECK_INTERVAL = 300  # Sleep time between each AFI status check.
+
+# Keywords for "interesting" lines in the log. Case and location insensitive.
+IMPORTANT_WORDS = [
+    "warn",
+    "error",
+    "ignore", "ignoring"
+]

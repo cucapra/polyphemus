@@ -40,5 +40,10 @@
 <p>
     See <a href="{{ url_for('job_log', name=job.name) }}">the full log</a>.
 </p>
+{% if interesting %}
+<h2> Important Lines </h2>
+<pre class="log">{{ interesting }}</pre>
+{% endif %}
+<h2> Log </h2>
 <pre class="log">{{ log }}</pre>
 {% endblock %}
