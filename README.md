@@ -51,6 +51,8 @@ There is a [browser interface](http://gorgonzola.cs.cornell.edu:8000/) that lets
 There's even a hacky interface for compiling code interactively.
 It's also possible to do everything from the command line using [curl][].
 
+Polyphemus also suppoorts sdaccel workflows. To run polyphemus with sdaccel, set `TOOLCHIAN = f1` in `config_default.py`.
+
 To submit a job, upload a file to the `/jobs` endpoint:
 
     $ curl -F file=@foo.zip $POLYPHEMUS/jobs
@@ -70,6 +72,7 @@ You can also specify job configuration options as further POST parameters:
 - `make`, to use a Makefile instead of the built-in compilation workflow (see below).
 - `hwname`, which lets you provide a name for the job during makefile flow.
 - `directives`, which lets you provide the name of a file with a set of directives (pragmas).
+- `mode`, which lets you choose between software emulation(sw_emu), hardware emulation(hw_emu) and full hardware synthesis (hw) in the sdaccel workflow.
 
 Use `-F <option>=1` to enable these options with `curl`.
 
