@@ -25,11 +25,9 @@ This route automatically starts the necessary worker threads in the same process
 
 Polyphemus supports both Sdaccel and SDSoC workflow.
 You can specify Polyphemus configuration options inside `config_default.py`:
-`TOOLCHAIN`, set this to "f1" for deployment on F1; leave it as anything else for the SDSoC workflow.
-`EXECUTABLE_NAME`, the name to use for compiled executables.
-`PARALLELISM_MAKE`, the number of jobs to process in parallel in the "make" stage.
-`DEFAULT_F1_MODE`, use the "mode" job config option to override.
-
+- `TOOLCHAIN`, set this to "f1" for deployment on F1; leave it as anything else for the - SDSoC workflow.
+- `EXECUTABLE_NAME`, the name to use for compiled executables.
+- `PARALLELISM_MAKE`, the number of jobs to process in parallel in the "make" stage.
 
 There are two differences in deployment: you'll want to use a proper server, and Polyphemus will want to spawn a separate process just for the worker threads.
 
