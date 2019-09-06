@@ -23,6 +23,12 @@ This route automatically starts the necessary worker threads in the same process
 
 ### Deployment
 
+Polyphemus supports both Sdaccel and SDSoC workflow.
+You can specify Polyphemus configuration options inside `config_default.py`:
+- `TOOLCHAIN`, set this to "f1" for deployment on F1; leave it as anything else for the - SDSoC workflow.
+- `EXECUTABLE_NAME`, the name to use for compiled executables.
+- `PARALLELISM_MAKE`, the number of jobs to process in parallel in the "make" stage.
+
 There are two differences in deployment: you'll want to use a proper server, and Polyphemus will want to spawn a separate process just for the worker threads.
 
 Use this command to start the workers:
@@ -64,14 +70,21 @@ If the directory contains data files with `.data` extension, they'll be copied o
 You can also specify job configuration options as further POST parameters:
 
 **NOTE(rachit)**: These options are out of date. Document them properly here.
-
-- `estimate`, to use the Xilinx toolchain's resource estimation facility. The job will skip synthesis and execution on the FPGA.
+For both sdaccel and SDSoC workflow:
 - `skipexec`, to avoid actually trying to run the generated program. (Only necessary when `estimate` is false---estimate runs skip execution by default.)
 - `make`, to use a Makefile instead of the built-in compilation workflow (see below).
+
+SDSoC only:
+- `estimate`, to use the Xilinx toolchain's resource estimation facility. The job will skip synthesis and execution on the FPGA.
 - `hwname`, which lets you provide a name for the job during makefile flow.
 - `directives`, which lets you provide the name of a file with a set of directives (pragmas).
 
-Use `-F <option>=1` to enable these options with `curl`.
+Sdaccel only:
+- `mode`, which lets you choose between software emulation(sw_emu), hardware emulation(hw_emu) and full hardware synthesis (hw) in the sdaccel workflow.
+
+For `mode`, supply one of the following: sw_emu, hw_emu, and hw.
+Use `-F <option>=1` to enable other options with `curl`.
+
 
 To see a list of the current jobs, get `/jobs.csv`:
 
