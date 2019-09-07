@@ -93,6 +93,7 @@ The options are:
 - For SDSoC only:
     - `estimate`, to use the Xilinx toolchain's resource estimation facility. The job will skip synthesis and execution on the FPGA.
     - `directives`, which lets you provide the name of a TCL file with a set of HLS directives (pragmas) to use during compilation.
+    - `platform`, the name of the FPGA target to use.
 - For SDAccel (F1) only:
     - `mode`, which lets you choose between software emulation (`sw_emu`), hardware emulation (`hw_emu`) and full hardware synthesis (`hw`).
 
