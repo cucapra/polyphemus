@@ -13,14 +13,14 @@ The server keeps the data, including the database and the file trees for each jo
 ### Configuration
 
 To configure Polyphemus, create a file called `polyphemus.cfg` in the `instance` directory.
-For an exhaustive list of options, see [`config_default.py`][defaults].
+For an exhaustive list of options, see [their default values][defaults].
 These ones are particularly important:
 
 - `TOOLCHAIN`: Polyphemus supports two Xilinx HLS workflows: [SDAccel][] (on [Amazon F1][f1]) and [SDSoC][]. Set this to `"f1"` for deployment on F1. Set it to anything else to use the SDSoC workflow.
 - `PARALLELISM_MAKE`: The number of jobs to process in parallel in the "make" stage. The default is 1 (no parallelism).
 - `HLS_COMMAND_PREFIX`: A prefix to use for every command that requires invoking an HLS tool. Use this if you need to set up the environment before calling `make`, for example. This should be a list of strings.
 
-[default]: https://github.com/cucapra/polyphemus/blob/master/polyphemus/config_default.py
+[defaults]: https://github.com/cucapra/polyphemus/blob/master/polyphemus/config_default.py
 [f1]: https://aws.amazon.com/ec2/instance-types/f1/
 [sdaccel]: https://www.xilinx.com/products/design-tools/software-zone/sdaccel.html
 [sdsoc]: https://www.xilinx.com/sdsoc
