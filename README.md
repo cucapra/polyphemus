@@ -10,26 +10,36 @@ To set things up, get [pipenv][], and then type `pipenv install`.
 
 The server keeps the data, including the database and the file trees for each job, in an `instance` directory here.
 
-We have different recommendations depending on whether you're running Polyphemus locally (for development) or on a proper server.
+### Configuration
+
+To configure Polyphemus, create a file called `polyphemus.cfg` in the `instance` directory.
+For an exhaustive list of options, see [`config_default.py`][defaults].
+These ones are particularly important:
+
+- `TOOLCHAIN`: Polyphemus supports two Xilinx HLS workflows: [SDAccel][] (on [Amazon F1][f1]) and [SDSoC][]. Set this to `"f1"` for deployment on F1. Set it to anything else to use the SDSoC workflow.
+- `PARALLELISM_MAKE`: The number of jobs to process in parallel in the "make" stage. The default is 1 (no parallelism).
+- `HLS_COMMAND_PREFIX`: A prefix to use for every command that requires invoking an HLS tool. Use this if you need to set up the environment before calling `make`, for example. This should be a list of strings.
+
+[default]: https://github.com/cucapra/polyphemus/blob/master/polyphemus/config_default.py
+[f1]: https://aws.amazon.com/ec2/instance-types/f1/
+[sdaccel]: https://www.xilinx.com/products/design-tools/software-zone/sdaccel.html
+[sdsoc]: https://www.xilinx.com/sdsoc
 
 ### Development
 
-Then, run this command to get a development server:
+Run this command to get a development server, with [Flask][]'s debug mode enabled:
 
     $ FLASK_APP=polyphemus.server FLASK_ENV=development pipenv run flask run
 
 You can also use `make dev` as a shortcut.
 This route automatically starts the necessary worker threads in the same process as the development server.
 
+[flask]: https://flask.palletsprojects.com/
+
 ### Deployment
 
-Polyphemus supports both Sdaccel and SDSoC workflow.
-You can specify Polyphemus configuration options inside `config_default.py`:
-- `TOOLCHAIN`, set this to "f1" for deployment on F1; leave it as anything else for the - SDSoC workflow.
-- `EXECUTABLE_NAME`, the name to use for compiled executables.
-- `PARALLELISM_MAKE`, the number of jobs to process in parallel in the "make" stage.
-
-There are two differences in deployment: you'll want to use a proper server, and Polyphemus will want to spawn a separate process just for the worker threads.
+For proper production, there are two differences from running the development version:
+you'll want to use a proper web server, and Polyphemus will want to spawn a separate process just for the worker threads.
 
 Use this command to start the workers:
 
