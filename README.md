@@ -10,26 +10,36 @@ To set things up, get [pipenv][], and then type `pipenv install`.
 
 The server keeps the data, including the database and the file trees for each job, in an `instance` directory here.
 
-We have different recommendations depending on whether you're running Polyphemus locally (for development) or on a proper server.
+### Configuration
+
+To configure Polyphemus, create a file called `polyphemus.cfg` in the `instance` directory.
+For an exhaustive list of options, see [their default values][defaults].
+These ones are particularly important:
+
+- `TOOLCHAIN`: Polyphemus supports two Xilinx HLS workflows: [SDAccel][] (on [Amazon F1][f1]) and [SDSoC][]. Set this to `"f1"` for deployment on F1. Set it to anything else to use the SDSoC workflow.
+- `PARALLELISM_MAKE`: The number of jobs to process in parallel in the "make" stage. The default is 1 (no parallelism).
+- `HLS_COMMAND_PREFIX`: A prefix to use for every command that requires invoking an HLS tool. Use this if you need to set up the environment before calling `make`, for example. This should be a list of strings.
+
+[defaults]: https://github.com/cucapra/polyphemus/blob/master/polyphemus/config_default.py
+[f1]: https://aws.amazon.com/ec2/instance-types/f1/
+[sdaccel]: https://www.xilinx.com/products/design-tools/software-zone/sdaccel.html
+[sdsoc]: https://www.xilinx.com/sdsoc
 
 ### Development
 
-Then, run this command to get a development server:
+Run this command to get a development server, with [Flask][]'s debug mode enabled:
 
     $ FLASK_APP=polyphemus.server FLASK_ENV=development pipenv run flask run
 
 You can also use `make dev` as a shortcut.
 This route automatically starts the necessary worker threads in the same process as the development server.
 
+[flask]: https://flask.palletsprojects.com/
+
 ### Deployment
 
-Polyphemus supports both Sdaccel and SDSoC workflow.
-You can specify Polyphemus configuration options inside `config_default.py`:
-- `TOOLCHAIN`, set this to "f1" for deployment on F1; leave it as anything else for the - SDSoC workflow.
-- `EXECUTABLE_NAME`, the name to use for compiled executables.
-- `PARALLELISM_MAKE`, the number of jobs to process in parallel in the "make" stage.
-
-There are two differences in deployment: you'll want to use a proper server, and Polyphemus will want to spawn a separate process just for the worker threads.
+For proper production, there are two differences from running the development version:
+you'll want to use a proper web server, and Polyphemus will want to spawn a separate process just for the worker threads.
 
 Use this command to start the workers:
 
@@ -54,8 +64,11 @@ Using Polyphemus
 ----------------
 
 There is a [browser interface](http://gorgonzola.cs.cornell.edu:8000/) that lets you view jobs and start new ones.
-There's even a hacky interface for compiling code interactively.
 It's also possible to do everything from the command line using [curl][].
+
+[curl]: https://curl.haxx.se
+
+### Submitting Jobs
 
 To submit a job, upload a file to the `/jobs` endpoint:
 
@@ -67,24 +80,26 @@ For example, you can zip up a directory and submit it like this:
 
 If the directory contains data files with `.data` extension, they'll be copied over to the target FPGA.
 
-You can also specify job configuration options as further POST parameters:
+### Job Options
 
-**NOTE(rachit)**: These options are out of date. Document them properly here.
-For both sdaccel and SDSoC workflow:
-- `skipexec`, to avoid actually trying to run the generated program. (Only necessary when `estimate` is false---estimate runs skip execution by default.)
-- `make`, to use a Makefile instead of the built-in compilation workflow (see below).
+When submitting a job, you can specify job configuration options as further POST parameters.
+Some options are only relevant for a particular HLS workflow (see "Configuration," above).
+The options are:
 
-SDSoC only:
-- `estimate`, to use the Xilinx toolchain's resource estimation facility. The job will skip synthesis and execution on the FPGA.
-- `hwname`, which lets you provide a name for the job during makefile flow.
-- `directives`, which lets you provide the name of a file with a set of directives (pragmas).
+- For all workflows:
+    - `skipexec`, to avoid actually trying to run the generated program. (Only necessary when `estimate` is false---estimated runs skip execution by default.)
+    - `make`, to use a Makefile instead of the built-in compilation workflow (see "Makefiles," below).
+    - `hwname`, which lets you provide a name for the job during Makefile flow.
+- For SDSoC only:
+    - `estimate`, to use the Xilinx toolchain's resource estimation facility. The job will skip synthesis and execution on the FPGA.
+    - `directives`, which lets you provide the name of a TCL file with a set of HLS directives (pragmas) to use during compilation.
+    - `platform`, the name of the FPGA target to use.
+- For SDAccel (F1) only:
+    - `mode`, which lets you choose between software emulation (`sw_emu`), hardware emulation (`hw_emu`) and full hardware synthesis (`hw`).
 
-Sdaccel only:
-- `mode`, which lets you choose between software emulation(sw_emu), hardware emulation(hw_emu) and full hardware synthesis (hw) in the sdaccel workflow.
+Use `-F <option>=<value>` to specify these options with `curl`.
 
-For `mode`, supply one of the following: sw_emu, hw_emu, and hw.
-Use `-F <option>=1` to enable other options with `curl`.
-
+### Viewing Jobs
 
 To see a list of the current jobs, get `/jobs.csv`:
 
@@ -112,6 +127,5 @@ For estimation, Polyphemus supplies flags for `sds++` using the `SDSFLAGS` varia
 %.o: %.c
     sds++ $(SDSFLAGS) $< -o $@
 ```
-For configurations provided above, Polyphemus also relies on following variables, `ESTIMATE`, `DIRECTIVES`. Make sure these variables behave according to the configuration description in your makefile.
 
-[curl]: https://curl.haxx.se
+For the job configuration options listed above, Polyphemus provides the additional variables `ESTIMATE` and `DIRECTIVES`. Make sure that your Makefile uses these variables to do the appropriate thing during compilation.
