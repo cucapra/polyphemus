@@ -64,8 +64,9 @@ Using Polyphemus
 ----------------
 
 There is a [browser interface](http://gorgonzola.cs.cornell.edu:8000/) that lets you view jobs and start new ones.
-There's even a hacky interface for compiling code interactively.
 It's also possible to do everything from the command line using [curl][].
+
+### Submitting Jobs
 
 To submit a job, upload a file to the `/jobs` endpoint:
 
@@ -77,24 +78,25 @@ For example, you can zip up a directory and submit it like this:
 
 If the directory contains data files with `.data` extension, they'll be copied over to the target FPGA.
 
-You can also specify job configuration options as further POST parameters:
+### Job Options
 
-**NOTE(rachit)**: These options are out of date. Document them properly here.
-For both sdaccel and SDSoC workflow:
-- `skipexec`, to avoid actually trying to run the generated program. (Only necessary when `estimate` is false---estimate runs skip execution by default.)
-- `make`, to use a Makefile instead of the built-in compilation workflow (see below).
+When submitting a job, you can specify job configuration options as further POST parameters.
+Some options are only relevant for a particular HLS workflow (see "Configuration," above).
+The options are:
 
-SDSoC only:
-- `estimate`, to use the Xilinx toolchain's resource estimation facility. The job will skip synthesis and execution on the FPGA.
-- `hwname`, which lets you provide a name for the job during makefile flow.
-- `directives`, which lets you provide the name of a file with a set of directives (pragmas).
+- For all workflows:
+    - `skipexec`, to avoid actually trying to run the generated program. (Only necessary when `estimate` is false---estimated runs skip execution by default.)
+    - `make`, to use a Makefile instead of the built-in compilation workflow (see "Makefiles," below).
+    - `hwname`, which lets you provide a name for the job during Makefile flow.
+- For SDSoC only:
+    - `estimate`, to use the Xilinx toolchain's resource estimation facility. The job will skip synthesis and execution on the FPGA.
+    - `directives`, which lets you provide the name of a TCL file with a set of HLS directives (pragmas) to use during compilation.
+- For SDAccel (F1) only:
+    - `mode`, which lets you choose between software emulation (`sw_emu`), hardware emulation (`hw_emu`) and full hardware synthesis (`hw`).
 
-Sdaccel only:
-- `mode`, which lets you choose between software emulation(sw_emu), hardware emulation(hw_emu) and full hardware synthesis (hw) in the sdaccel workflow.
+Use `-F <option>=<value>` to specify these options with `curl`.
 
-For `mode`, supply one of the following: sw_emu, hw_emu, and hw.
-Use `-F <option>=1` to enable other options with `curl`.
-
+### Viewing Jobs
 
 To see a list of the current jobs, get `/jobs.csv`:
 
