@@ -270,6 +270,7 @@ def stage_make(db, config):
             cwd=CODE_DIR,
         )
 
+
 def _sds_cmd(prefix, task):
     """Make a sds++ command with all our standard arguments.
     """
@@ -442,11 +443,14 @@ def stage_fpga_execute(db, config):
                            'source /opt/xilinx/xrt/setup.sh ;\
                             ./{}'.format(config['EXECUTABLE_NAME'])]
             else:
-                exe_cmd = ['sh', '-c', 'source $AWS_FPGA_REPO_DIR/sdaccel_setup.sh > /dev/null;\
-                XCL_EMULATION_MODE={} ./{}'.format(
-                    task['mode'],
-                    config['EXECUTABLE_NAME']
-                )]
+                exe_cmd = [
+                    'sh', '-c',
+                    'source $AWS_FPGA_REPO_DIR/sdaccel_setup.sh > /dev/null; '
+                    'XCL_EMULATION_MODE={} ./{}'.format(
+                        task['mode'],
+                        config['EXECUTABLE_NAME']
+                    )
+                ]
             task.run(
                 exe_cmd,
                 cwd=CODE_DIR,
