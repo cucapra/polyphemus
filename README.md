@@ -66,6 +66,8 @@ Using Polyphemus
 There is a [browser interface](http://gorgonzola.cs.cornell.edu:8000/) that lets you view jobs and start new ones.
 It's also possible to do everything from the command line using [curl][].
 
+[curl]: https://curl.haxx.se
+
 ### Submitting Jobs
 
 To submit a job, upload a file to the `/jobs` endpoint:
@@ -124,6 +126,5 @@ For estimation, Polyphemus supplies flags for `sds++` using the `SDSFLAGS` varia
 %.o: %.c
     sds++ $(SDSFLAGS) $< -o $@
 ```
-For configurations provided above, Polyphemus also relies on following variables, `ESTIMATE`, `DIRECTIVES`. Make sure these variables behave according to the configuration description in your makefile.
 
-[curl]: https://curl.haxx.se
+For the job configuration options listed above, Polyphemus provides the additional variables `ESTIMATE` and `DIRECTIVES`. Make sure that your Makefile uses these variables to do the appropriate thing during compilation.
