@@ -3,12 +3,19 @@
 <h2>Job {{ job.name }}</h2>
 <ul>
     <li>
+        <b>name:</b>
+
+        <form action="" method="post" class="inline">
+            <input type="text" name="hwname" value="{{ job.config.hwname }}">
+            <input type="submit" value="set">
+        </form>
+    </li>
+    <li>
         <b>started:</b>
         {{ job.started | dt }}
     </li>
     <li>
         <b>state:</b>
-        {{ status_strings[job.state] }}
 
         <form action="" method="post" class="inline">
             <select name="state">
@@ -19,7 +26,7 @@
                 </option>
                 {%- endfor %}
             </select>
-            <input type="submit" value="Set">
+            <input type="submit" value="set">
         </form>
     </li>
     <li>

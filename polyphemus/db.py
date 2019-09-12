@@ -177,6 +177,15 @@ class JobDB:
             self._write(job)
             self.cv.notify_all()
 
+    def set_name(self, job, name):
+        """Update a job's name
+        """
+        with self.cv:
+            job['config']['hwname'] = name
+            self.log(job['name'], 'hwname changed to {}'.format(name))
+            self._write(job)
+            self.cv.notify_all()
+
     def acquire(self, old_state, new_state):
         """Block until a job is available in `old_state`, update its
         state to `new_state`, and return it.

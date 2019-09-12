@@ -183,10 +183,20 @@ def show_job(name):
 
     # Possibly update the job.
     if request.method == 'POST':
-        new_state = request.form['state']
-        db.log(job['name'], 'manual state change')
-        db.set_state(job, new_state)
-        notify_workers(job['name'])
+        # Is this a job state change request?
+        if 'state' in request.form:
+            new_state = request.form['state']
+            db.set_state(job, new_state)
+            notify_workers(job['name'])
+
+        # Is this a name change request?
+        elif 'hwname' in request.form:
+            new_name = request.form['hwname']
+            db.set_name(job, new_name)
+
+        else:
+            flask.abort(500, 'Unknown POST request.')
+
 
     # Construct regex for interesting words
     interest_regex = re.compile('|'.join(app.config['IMPORTANT_WORDS']), re.I)
