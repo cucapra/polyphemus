@@ -8,6 +8,7 @@ from .db import JobDB, ARCHIVE_NAME, NotFoundError, BadJobError
 from datetime import datetime
 import re
 from . import state
+import json
 
 # Our Flask application.
 app = flask.Flask(__name__, instance_relative_config=True)
@@ -206,6 +207,7 @@ def show_job(name):
     return flask.render_template(
         'job.html',
         job=job,
+        config = json.dumps(job['config'], indent=4, sort_keys=True),
         status_strings=STATUS_STRINGS,
         log=''.join(log_lines),
         interesting=''.join(interesting_lines),
