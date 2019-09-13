@@ -148,13 +148,7 @@ def _task_config(task, config):
     task's `sdsflags` and `platform` fields so they can be used
     directly.
     """
-    flags = task['config'].get('sdsflags') or ''
-    est = 0
-    if task['config'].get('estimate'):
-        flags += ' -perf-est-hw-only'
-        est = 1
-    task['sdsflags'] = flags
-    task['estimate'] = est
+    task['estimate'] = int(task['config'].get('estimate'))
 
     task['platform'] = task['config'].get('platform') or \
         config['DEFAULT_PLATFORM']
@@ -180,7 +174,6 @@ class WorkThread(threading.Thread):
     def run(self):
         while True:
             self.func(self.db, self.config)
-
 
 def should_make(task):
     """Run stage_make if make was specified in the task config.
@@ -243,11 +236,6 @@ def stage_make(db, config):
     with work(db, state.MAKE, state.MAKE_PROGRESS, stage_after_make) as task:
         _task_config(task, config)
 
-        if task['sdsflags']:
-            task.log('WARNING: make stage is ignoring sdsflags={}'.format(
-                task['sdsflags']
-            ))
-
         if config['TOOLCHAIN'] == 'f1':
             # Get the AWS platform ID for F1 builds.
             platform_script = (
@@ -294,91 +282,6 @@ def stage_make(db, config):
             timeout=config["SYNTHESIS_TIMEOUT"],
             cwd=CODE_DIR,
         )
-
-
-def _sds_cmd(prefix, task):
-    """Make a sds++ command with all our standard arguments.
-    """
-    hw_basename, hw_c, _ = _hw_filenames(task)
-    sds_cmd_head = prefix + [
-        'sds++',
-        '-sds-pf', task['platform'],
-    ]
-    sds_cmd_tail = [
-        '-clkid', '3',
-        '-poll-mode', '1',
-        '-verbose', '-Wall', '-O3',
-    ]
-    if task['config']['directives']:
-        return sds_cmd_head + [
-            '-sds-hw', hw_basename, hw_c, '-hls-tcl',
-            task['config']['directives'], '-sds-end',
-        ] + sds_cmd_tail
-    else:
-        return sds_cmd_head + [
-            '-sds-hw', hw_basename, hw_c, '-sds-end',
-        ] + sds_cmd_tail
-
-
-def _hw_filenames(task):
-    """For a given task, get its hardware source file's basename, C
-    filename, and object filename.
-    """
-    hw_basename = task['hw_basename']
-    return hw_basename, hw_basename + C_EXT, hw_basename + OBJ_EXT
-
-
-def stage_hls(db, config):
-    """Work stage: compile C code to object files and then to an FPGA
-    bitstream with HLS toolchain.
-    """
-    prefix = config["HLS_COMMAND_PREFIX"]
-    with work(db, state.UNPACK_FINISH, state.HLS, state.HLS_FINISH) as task:
-        _task_config(task, config)
-        flags = shlex.split(task['sdsflags'])
-        sds_cmd = _sds_cmd(prefix, task)
-        _, hw_c, hw_o = _hw_filenames(task)
-
-        # Run Xilinx SDSoC compiler for hardware functions.
-        task.run(
-            sds_cmd + flags + [
-                '-c',
-                hw_c, '-o', hw_o,
-            ],
-            timeout=config["COMPILE_TIMEOUT"],
-            cwd=CODE_DIR,
-        )
-
-        # Run the Xilinx SDSoC compiler for host function.
-        task.run(
-            sds_cmd + flags + [
-                '-c',
-                C_MAIN, '-o', HOST_O,
-            ],
-            cwd=CODE_DIR,
-        )
-
-        # Run Xilinx SDSoC compiler for created objects.
-        task.run(
-            sds_cmd + flags + [
-                hw_o, HOST_O, '-o', config['EXECUTABLE_NAME'],
-            ],
-            timeout=config["SYNTHESIS_TIMEOUT"],
-            cwd=CODE_DIR,
-        )
-
-        # Copy datafiles to the executable directory.
-        data_files = [
-            os.path.join(task.code_dir, f)
-            for f in os.listdir(task.code_dir)
-            if f.endswith('.data')
-        ]
-        if data_files:
-            dest = os.path.join(task.code_dir, 'sd_card')
-            task.run(
-                ['cp'] + data_files + [dest]
-            )
-
 
 def stage_afi(db, config):
     """Work stage: create the AWS FPGA binary and AFI from the *.xclbin
@@ -443,7 +346,6 @@ def stage_afi(db, config):
             if status == 'available':
                 break
 
-
 def stage_fpga_execute(db, config):
     """Work stage: upload bitstream to the FPGA controller, run the
     program, and output the results.
@@ -455,6 +357,7 @@ def stage_fpga_execute(db, config):
     board should clearly not be on a public network).
     """
     with work(db, state.HLS_FINISH, state.RUN, state.DONE) as task:
+
         # Do nothing in this stage if we're just running estimation.
         if task['config'].get('estimate') or task['config'].get('skipexec'):
             task.log('skipping FPGA execution stage')
@@ -511,8 +414,7 @@ def stage_fpga_execute(db, config):
             )
 
 
-STAGES = stage_unpack, stage_make, stage_hls, stage_fpga_execute
-
+STAGES = stage_unpack, stage_make, stage_fpga_execute
 
 def work_threads(db, config):
     """Get a list of (unstarted) Thread objects for processing tasks.
