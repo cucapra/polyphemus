@@ -185,15 +185,6 @@ class JobDB:
         self._write(job)
         self.cv.notify_all()
 
-    def add_make_conf(self, job, make_conf):
-        """Add configuration variables being used by make.
-        """
-        with self.cv:
-            job['config']['make_conf'] = make_conf
-            self.log(job['name'], 'make conf added {}'.format(make_conf))
-            self._write(job)
-            self.cv.notify_all()
-
     def acquire(self, old_state, new_state):
         """Block until a job is available in `old_state`, update its
         state to `new_state`, and return it.

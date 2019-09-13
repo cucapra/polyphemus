@@ -283,7 +283,10 @@ def stage_make(db, config):
         proc = task.run(make_cmd + ['--dry-run', '--print-data-base'],
                         capture=True, cwd=CODE_DIR)
         make_conf = get_make_conf(proc.stdout.decode('utf8').strip(), config)
-        db.add_make_conf(task.job, make_conf)
+        # Update the job config with make_conf
+        task.job['config']['make_conf'] = make_conf
+        db.log(task.job['name'], 'make conf added {}'.format(make_conf))
+        db._write(task.job)
 
         # Run the make target
         task.run(

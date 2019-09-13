@@ -192,7 +192,9 @@ def show_job(name):
         # Is this a name change request?
         elif 'hwname' in request.form:
             new_name = request.form['hwname']
-            db.set_name(job, new_name)
+            job['config']['hwname'] = new_name
+            db.log(job['name'], 'hwname changed to {}'.format(new_name))
+            db._write(job)
 
         else:
             flask.abort(500, 'Unknown POST request.')
