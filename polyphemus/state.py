@@ -3,18 +3,19 @@
 #
 #       UPLOAD
 #         |
-#       UNPACK---------------+
-#         |                  |
-#    UNPACK_FINISH           |
-#         |                MAKE
-#         |                  |
-#         |                  |
-#         |                  |
-#         |                MAKE_PROGRESS----+
-#        HLS                 |              |
-#         |                  |          AFI_START (F1 only)
-#         |                  |              |
-#      HLS_FINISH -----------+-------------AFI (F1 only)
+#       UNPACK
+#         |
+#    UNPACK_FINISH
+#         |
+#         |
+#       MAKE
+#         |
+#    MAKE_PROGRESS-------------+
+#         |                    |
+#         |                AFI_START (F1 only)
+#         |                    |
+#      HLS_FINISH ----------AFI (F1 only)
+#         |
 #         |
 #        RUN
 #         |
