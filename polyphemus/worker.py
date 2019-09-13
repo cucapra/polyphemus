@@ -9,6 +9,7 @@ import time
 from . import state
 import json
 import glob
+import re
 
 C_EXT = '.cpp'
 OBJ_EXT = '.o'
@@ -189,6 +190,20 @@ def should_make(task):
     else:
         return state.UNPACK_FINISH
 
+def get_make_conf(log, config):
+    """Extract configuration variables from a make job and update the config
+    object with them.
+    """
+    conf_str = r"^\s*({})\s*:?=\s*(.*)$".format('|'.join(config['MAKE_CONF_VARS']))
+    conf_re = re.compile(conf_str, re.I)
+
+    conf = {}
+    for line in log.split('\n'):
+        matches = conf_re.search(line.strip())
+        if matches:
+            conf[matches.group(1)] = matches.group(2)
+
+    return conf
 
 def stage_unpack(db, _):
     """Work stage: unpack source code.
@@ -236,9 +251,9 @@ def stage_make(db, config):
         if config['TOOLCHAIN'] == 'f1':
             # Get the AWS platform ID for F1 builds.
             platform_script = (
-                'cd $AWS_FPGA_REPO_DIR ; '
-                'source ./sdaccel_setup.sh > /dev/null ; '
-                'echo $AWS_PLATFORM'
+                'cd $AWS_FPGA_REPO_DIR; '
+                'source ./sdaccel_setup.sh > /dev/null; '
+                'echo $AWS_PLATFORM; '
             )
             proc = task.run([platform_script], capture=True, shell=True)
             aws_platform = proc.stdout.decode('utf8').strip()
@@ -264,6 +279,13 @@ def stage_make(db, config):
                 'DIRECTIVES={}'.format(task['config']['directives'])
             )
 
+        # Before running the make target, collect configuration information.
+        proc = task.run(make_cmd + ['--dry-run', '--print-data-base'],
+                        capture=True, cwd=CODE_DIR)
+        make_conf = get_make_conf(proc.stdout.decode('utf8').strip(), config)
+        db.add_make_conf(task.job, make_conf)
+
+        # Run the make target
         task.run(
             make_cmd,
             timeout=config["SYNTHESIS_TIMEOUT"],

@@ -180,9 +180,17 @@ class JobDB:
     def set_name(self, job, name):
         """Update a job's name
         """
+        job['config']['hwname'] = name
+        self.log(job['name'], 'hwname changed to {}'.format(name))
+        self._write(job)
+        self.cv.notify_all()
+
+    def add_make_conf(self, job, make_conf):
+        """Add configuration variables being used by make.
+        """
         with self.cv:
-            job['config']['hwname'] = name
-            self.log(job['name'], 'hwname changed to {}'.format(name))
+            job['config']['make_conf'] = make_conf
+            self.log(job['name'], 'make conf added {}'.format(make_conf))
             self._write(job)
             self.cv.notify_all()
 

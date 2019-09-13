@@ -71,8 +71,16 @@ S3_LOG = 'SDAccel_log'  # logs-folder-name
 AFI_CHECK_INTERVAL = 300  # Sleep time between each AFI status check.
 
 # Keywords for "interesting" lines in the log. Case and location insensitive.
+# Can use regex for these.
 IMPORTANT_WORDS = [
     "warn",
     "error",
     "ignore", "ignoring"
+]
+
+# Configuration variables to look for when running the make stage. Can use
+# regex for these. Case insensitive.
+MAKE_CONF_VARS = [
+    "device", "platform",
+    # "\S*cxx\S*", "\S*flags\S*"
 ]
