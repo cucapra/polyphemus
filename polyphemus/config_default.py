@@ -30,13 +30,17 @@ TEXT_EXTENSIONS = [
     'est',
 ]
 
+# All curl options come from strings. Convert strings to bool.
+def str_to_bool(x):
+    return not x == '0' or x == ''
+
 # Configuration options allowed during job creation. Each option has a
 # conversion function (i.e., type) used to translate the request value.
 CONFIG_OPTIONS = {
-    'estimate': bool,
-    'skipexec': bool,
+    'estimate': str_to_bool,
+    'skipexec': str_to_bool,
+    'make': str_to_bool,
     'directives': str,
-    'make': bool,
     'hwname': str,
     'sdsflags': str,
     'platform': str,
