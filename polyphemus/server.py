@@ -9,6 +9,7 @@ from datetime import datetime
 import re
 from . import state
 import json
+import git
 
 # Our Flask application.
 app = flask.Flask(__name__, instance_relative_config=True)
@@ -54,6 +55,11 @@ def _unpad(s):
     """Remove padding zeroes from a formatted date string."""
     return re.sub(r'(^|\s)0+', r'\1', s)
 
+
+def git_commit_sha():
+    sha =  git.Repo().head.object.hexsha[:7]
+    link = "{}/commit/{}".format(app.config['GH_REPO'], sha)
+    return sha, link
 
 @app.template_filter('dt')
 def _datetime_filter(value, withtime=True):
@@ -170,8 +176,11 @@ def jobs_csv():
 
 @app.route('/')
 def jobs_html():
+    sha, link = git_commit_sha()
     return flask.render_template(
         'joblist.html',
+        commit=sha,
+        commit_link=link,
         jobs=db._all(),
         status_strings=STATUS_STRINGS,
     )
@@ -215,9 +224,12 @@ def show_job(name):
         log_lines = []
         interesting_lines = []
 
+    sha, link = git_commit_sha()
 
     return flask.render_template(
         'job.html',
+        commit=sha,
+        commit_link=link,
         job=job,
         config=json.dumps(job['config'], indent=4, sort_keys=True),
         status_strings=STATUS_STRINGS,

@@ -1,3 +1,6 @@
+# Github repository
+GH_REPO = "https://github.com/cucapra/polyphemus"
+
 # The extensions to allow for uploaded code archives.
 UPLOAD_EXTENSIONS = ['zip']
 
