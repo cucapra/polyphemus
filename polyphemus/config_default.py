@@ -35,7 +35,7 @@ TEXT_EXTENSIONS = [
 
 # All curl options come from strings. Convert strings to bool.
 def str_to_bool(x):
-    return not x == '0' or x == ''
+    return not (x == '0' or x == '')
 
 # Configuration options allowed during job creation. Each option has a
 # conversion function (i.e., type) used to translate the request value.
