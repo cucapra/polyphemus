@@ -1,4 +1,5 @@
 import os
+import re
 import shlex
 import subprocess
 import traceback
@@ -123,3 +124,42 @@ def work(db, old_state, temp_state, done_state_or_func):
         task.set_state(state.FAIL)
     else:
         task.set_state(done_func(task))
+
+
+def task_config(task, config):
+    """Interpret some configuration options on a task, and assign the
+    task's `sdsflags` and `platform` fields so they can be used
+    directly.
+    """
+    task['estimate'] = int(task['config'].get('estimate'))
+
+    task['platform'] = task['config'].get('platform') or \
+        config['DEFAULT_PLATFORM']
+    task['mode'] = task['config'].get('mode') or \
+        config['DEFAULT_F1_MODE']
+
+
+def update_make_conf(make_cmd, task, db, config):
+    """Extract configuration variables from a make job and update the config
+    object with them.
+    """
+
+    # Before running the make target, collect configuration information.
+    proc = task.run(make_cmd + ['--dry-run', '--print-data-base'],
+                    capture=True, cwd=CODE_DIR)
+    log = proc.stdout.decode('utf8').strip()
+
+    # Extract relevant conf options.
+    conf_str = r"^\s*({})\s*:?=\s*(.*)$".format('|'.join(config['MAKE_CONF_VARS']))
+    conf_re = re.compile(conf_str, re.I)
+
+    make_conf = {}
+    for line in log.split('\n'):
+        matches = conf_re.search(line.strip())
+        if matches:
+            make_conf[matches.group(1)] = matches.group(2)
+
+    # Update the job config with make_conf
+    task.job['config']['make_conf'] = make_conf
+    db.log(task.job['name'], 'make conf added {}'.format(make_conf))
+    db._write(task.job)
