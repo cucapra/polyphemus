@@ -2,8 +2,8 @@ import os
 import glob
 import json
 import time
-import state
 
+from . import state
 from .stages_common import work, task_config, update_make_conf
 from .db import CODE_DIR
 

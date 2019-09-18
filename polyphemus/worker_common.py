@@ -1,6 +1,6 @@
 import os
-import state
 
+from . import state
 from .stages_common import work
 from .db import ARCHIVE_NAME
 

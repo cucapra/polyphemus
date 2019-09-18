@@ -45,7 +45,7 @@ def work_threads(db, config):
 
     STAGES = [stage_unpack, stage_make]
     if config['TOOLCHAIN'] == 'f1':
-        STAGES += stage_zynq_fpga_execute
+        STAGES += [stage_zynq_fpga_execute]
     else:
         STAGES += stage_afi, stage_f1_fpga_execute
 
