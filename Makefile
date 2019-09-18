@@ -1,4 +1,4 @@
-.PHONY: run clean
+.PHONY: run clean serve worker
 
 PORT ?= 8000
 
@@ -8,8 +8,8 @@ dev:
 serve:
 	pipenv run gunicorn --bind 0.0.0.0:$(PORT) polyphemus.server:app
 
-worker:
-	pipenv run python -m polyphemus.workproc
-
 clean:
 	rm -rf instance
+
+worker:
+	pipenv run worker

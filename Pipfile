@@ -10,3 +10,6 @@ curio = "*"
 gitpython = "*"
 
 [dev-packages]
+
+[scripts]
+worker = "python -m polyphemus.workproc"
