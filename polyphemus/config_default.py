@@ -45,7 +45,6 @@ CONFIG_OPTIONS = {
     'make': str_to_bool,
     'directives': str,
     'hwname': str,
-    'sdsflags': str,
     'platform': str,
     'mode': str,
 }

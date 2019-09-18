@@ -128,7 +128,7 @@ def work(db, old_state, temp_state, done_state_or_func):
 
 def task_config(task, config):
     """Interpret some configuration options on a task, and assign the
-    task's `sdsflags` and `platform` fields so they can be used
+    `platform`, `estimate`, etc. fields so they can be used
     directly.
     """
     task['estimate'] = int(task['config'].get('estimate'))

@@ -121,11 +121,6 @@ Makefiles
 
 Larger projects that use multiple sources and need them to linked in a particular fashion should use the `make` configuration option. With this option, Polyphemus will run the provided Makefile instead of running its own commands and assume that the artifact is built when the command terminates successfully.
 
-For estimation, Polyphemus supplies flags for `sds++` using the `SDSFLAGS` variable. In your Makefile, make sure that you pass in this option when building hardware targets:
-
-```make
-%.o: %.c
-    sds++ $(SDSFLAGS) $< -o $@
-```
-
-For the job configuration options listed above, Polyphemus provides the additional variables `ESTIMATE` and `DIRECTIVES`. Make sure that your Makefile uses these variables to do the appropriate thing during compilation.
+For the job configuration options listed above, Polyphemus provides the
+additional variables `ESTIMATE` and `DIRECTIVES`. Make sure that your Makefile
+uses these variables to do the appropriate thing during compilation.
