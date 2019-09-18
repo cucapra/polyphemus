@@ -1,13 +1,17 @@
+import argparse
 import curio
 import os
+import sys
+import time
+
 from . import worker
 from .db import JobDB
 from flask.config import Config
-import sys
 
 
 INSTANCE_DIR = 'instance'
 SOCKNAME = 'workproc.sock'
+KNOWN_STAGES_STR = ', '.join(worker.KNOWN_STAGES.keys())
 
 
 class WorkProc:
@@ -32,11 +36,19 @@ class WorkProc:
         # Create the database.
         self.db = db or JobDB(self.basedir)
 
-    def start(self):
-        """Create and start the worker threads.
+    def start(self, stages_conf=None):
+        """Create and start the worker threads. If stages_conf is None, create the
+        default workers for the given toolchain. If stages_confg is a list of
+        strings in worker.KNOWN_STAGES then create workers mapping to those.
         """
-        threads = worker.work_threads(self.db, self.config)
-        for thread in threads:
+        if stages_conf is None:
+            stages = worker.default_work_stages(self.config)
+        else:
+            stages = [worker.KNOWN_STAGES[stage] for stage in stages_conf]
+
+        print(stages)
+
+        for thread in worker.work_threads(stages, self.config, self.db):
             if not thread.is_alive():
                 thread.start()
 
@@ -62,9 +74,25 @@ class WorkProc:
         try:
             curio.run(curio.unix_server, sockpath, self.handle)
         except KeyboardInterrupt:
+            print ("Shutting down worker.")
             pass
         finally:
             os.unlink(sockpath)
+
+
+    def poll(self):
+        """Continously poll the work directory for open jobs.
+        """
+        try:
+            while True:
+                with self.db.cv:
+                    self.db.cv.notify_all()
+
+                time.sleep(2)
+
+        except KeyboardInterrupt:
+            print ("Shutting down worker.")
+            pass
 
 
 def notify(basedir, jobname):
@@ -82,7 +110,43 @@ async def _notify(basedir, jobname):
     await sock.close()
 
 
+def valid_stage(stage):
+    """Check if a given string represents a valid stage
+    """
+    if stage not in worker.KNOWN_STAGES.keys():
+        raise argparse.ArgumentTypeError("Unknown stage: %s. Valid stages are: %s" % (stage, KNOWN_STAGES_STR))
+
+    return stage
+
+
 if __name__ == '__main__':
-    p = WorkProc(sys.argv[1] if len(sys.argv) > 1 else INSTANCE_DIR)
-    p.start()
-    p.serve()
+    parser = argparse.ArgumentParser(description='Start Polyphemus Work Processor.')
+
+    # Start in polling mode instead of sockets.
+    parser.add_argument('-p', '--poll',
+                        action='store_true',
+                        help='Poll instance directory for jobs every 2 seconds. Uses socket based communication from the server by default.')
+
+    # Instance directory to use for managing the jobs.
+    parser.add_argument('-i', '--instance-dir',
+                        help='Instance directory to use for tracking jobs. Defaults to directory specified in polyphemus.cfg.',
+                        type=str, action='store',
+                        default=INSTANCE_DIR, dest='instance',)
+
+    # List of stages to start this worker with.
+    parser.add_argument('-s', '--stages', nargs='*',
+                        help='Stages to start this WorkProc with. Defaults to ones for the current toolchain. Known stages: %s.' % KNOWN_STAGES_STR,
+                        default = None, type=valid_stage)
+
+    opts = parser.parse_args()
+
+
+    p = WorkProc(opts.instance)
+    p.start(opts.stages)
+
+    if opts.poll:
+        print('Starting worker in poll mode.')
+        p.poll()
+    else:
+        print('Starting worker with socket communication.')
+        p.serve()

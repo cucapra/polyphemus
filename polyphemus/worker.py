@@ -13,6 +13,15 @@ from .db import CODE_DIR
 from .worker_f1 import stage_f1_make, stage_afi, stage_f1_fpga_execute
 from .worker_sdsoc import stage_sdsoc_make, stage_zynq_fpga_execute
 
+# Strings corresponding to stages known to workers.
+KNOWN_STAGES = {
+    "unpack": stage_unpack,
+    "make_f1": stage_f1_make,
+    "make_sdsoc": stage_sdsoc_make,
+    "afi": stage_afi,
+    "exec_f1": stage_f1_fpga_execute,
+    "exec_zynq": stage_zynq_fpga_execute,
+}
 
 
 class WorkThread(threading.Thread):
@@ -35,15 +44,14 @@ class WorkThread(threading.Thread):
             self.func(self.db, self.config)
 
 
-
-def work_threads(db, config):
-    """Get a list of (unstarted) Thread objects for processing tasks.
+def default_work_stages(config):
+    """List of functions for the configured toolchain.
     """
 
     # Toolchain dependent stage configuration
     stage_make = stage_f1_make if config['TOOLCHAIN'] == 'f1' else stage_sdsoc_make
-
     stages = [stage_unpack, stage_make]
+
     if config['TOOLCHAIN'] == 'f1':
         stages += stage_afi, stage_f1_fpga_execute
     else:
@@ -51,4 +59,10 @@ def work_threads(db, config):
 
     stages += [stage_make for i in range(config['PARALLELISM_MAKE'] - 1)]
 
+    return stages
+
+
+def work_threads(stages, config, db):
+    """Return a list of (unstarted) Thread objects from a list of stage functions
+    """
     return [WorkThread(db, config, stage) for stage in stages]
