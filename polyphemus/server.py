@@ -28,8 +28,6 @@ db = JobDB(app.instance_path)
 STATUS_STRINGS = {
     state.UPLOAD: "Uploaded",
     state.UNPACK: "Unpacking",
-    state.UNPACK_FINISH: "Unpacked",
-    state.HLS: "Synthesis",
     state.HLS_FINISH: "Synthesized",
     state.MAKE: "make",
     state.MAKE_PROGRESS: "make-ing",

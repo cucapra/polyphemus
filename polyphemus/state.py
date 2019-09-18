@@ -1,23 +1,23 @@
-# These are the states that jobs can be in. The transitions are:
+# Jobs can be in two types of states: Locked (marked with <>) and Unlocked.
+# When several workers are running in parallel, they grab a lock on one of the
+# unlocked jobs they are capable of running and start executing them.
 #
 #
 #       UPLOAD
 #         |
-#       UNPACK
+#      <UNPACK>
 #         |
-#    UNPACK_FINISH
+#        MAKE
 #         |
+#   <MAKE_PROGRESS>-------------+
+#         |                     |
+#         |                 AFI_START (F1 only)
+#         |                     |
+#         +---------------<AFI> (F1 only)
 #         |
-#       MAKE
+#     HLS_FINISH
 #         |
-#    MAKE_PROGRESS-------------+
-#         |                    |
-#         |                AFI_START (F1 only)
-#         |                    |
-#      HLS_FINISH ----------AFI (F1 only)
-#         |
-#         |
-#        RUN
+#       <RUN>
 #         |
 #   +-----+-----+
 #   |           |
@@ -26,13 +26,11 @@
 
 UPLOAD = "uploaded"
 UNPACK = "unpacking"
-UNPACK_FINISH = "unpacked"
-HLS = "hlsing"
-HLS_FINISH = "hlsed"
 MAKE = "make"
 MAKE_PROGRESS = "makeing"
+HLS_FINISH = "hlsed"
+AFI_START = "starting_AFI"
+AFI = "generating_AFI"
 RUN = "fpga_executing"
 DONE = "done"
 FAIL = "failed"
-AFI_START = "starting_AFI"
-AFI = "generating_AFI"
