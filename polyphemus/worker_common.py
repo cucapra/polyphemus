@@ -8,7 +8,7 @@ from .db import ARCHIVE_NAME
 def stage_unpack(db, _):
     """Work stage: unpack source code.
     """
-    with work(db, state.UPLOAD, state.UNPACK, state.UNPACK_FINISH) as task:
+    with work(db, state.UPLOAD, state.UNPACK, state.MAKE) as task:
         # Unzip the archive into the code directory.
         os.mkdir(task.code_dir)
         task.run(["unzip", "-d", task.code_dir, "{}.zip".format(ARCHIVE_NAME)])
