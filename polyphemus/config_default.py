@@ -87,6 +87,6 @@ IMPORTANT_WORDS = [
 # Configuration variables to look for when running the make stage. Can use
 # regex for these. Case insensitive.
 MAKE_CONF_VARS = [
-    "device", "platform",
+    "device", "platform", "estimate", "target", "directives", "target_freq"
     # "\S*cxx\S*", "\S*flags\S*"
 ]
