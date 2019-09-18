@@ -49,8 +49,6 @@ def work_threads(db, config):
     else:
         stages += stage_afi, stage_f1_fpga_execute
 
-    stages = list(STAGES) + \
-        [stage_make for i in range(config['PARALLELISM_MAKE'] - 1)]
-    if config['TOOLCHAIN'] == 'f1':
-        stages.append(stage_afi)
+    stages += [stage_make for i in range(config['PARALLELISM_MAKE'] - 1)]
+
     return [WorkThread(db, config, stage) for stage in stages]
