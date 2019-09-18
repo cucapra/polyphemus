@@ -3,17 +3,38 @@ Polyphemus
 
 A server for managing FPGA build and execution environments.
 
+Execution Model
+---------------
+
+Polyphemus is built to run on heterogenous environments where several machines
+with different capabilities co-operate to complete jobs.In our use case, we use
+several AWS [FPGA AMI][fpga-ami]s to synthesize hardware and then run those on
+a single [F1][] instance.
+
+In development, Polyphemus has two parts: a server and several WorkProcs. The
+server is responsible for receiving jobs, adding them to the database, and
+generate the UI. Each WorkProc runs several threads with a specific 'stage'.
+Each stage is responsible for moving finishing a part of a job based on its
+capability.
+
+For example, an AWS deployment might have 4 synthesis server each of which can
+run on synthesis job while there is one F1 server for executing the jobs.
+
 Running Polyphemus
 ------------------
 
-To set things up, get [pipenv][], and then type `pipenv install`.
+### Prerequisites
 
-The server keeps the data, including the database and the file trees for each job, in an `instance` directory here.
+- Install [pipenv][]
+- Run `pipenv install` to configure the environment.
 
 ### Configuration
 
-To configure Polyphemus, create a file called `polyphemus.cfg` in the `instance` directory.
-For an exhaustive list of options, see [their default values][defaults].
+The server keeps the data, including the database and the file trees for each
+job, in an `instance` directory here.  To configure Polyphemus, create a file
+called `polyphemus.cfg` in the `instance` directory.  For an exhaustive list of
+options, see [their default values][defaults].
+
 These ones are particularly important:
 
 - `TOOLCHAIN`: Polyphemus supports two Xilinx HLS workflows: [SDAccel][] (on [Amazon F1][f1]) and [SDSoC][]. Set this to `"f1"` for deployment on F1. Set it to anything else to use the SDSoC workflow.
@@ -32,18 +53,21 @@ Run this command to get a development server, with [Flask][]'s debug mode enable
     $ FLASK_APP=polyphemus.server FLASK_ENV=development pipenv run flask run
 
 You can also use `make dev` as a shortcut.
-This route automatically starts the necessary worker threads in the same process as the development server.
+
+This route automatically starts the necessary worker threads in the same
+process as the development server.
 
 [flask]: https://flask.palletsprojects.com/
 
 ### Deployment
 
-For proper production, there are two differences from running the development version:
-you'll want to use a proper web server, and Polyphemus will want to spawn a separate process just for the worker threads.
+For proper production, there are two differences from running the development
+version: You'll want to use a proper web server, and Polyphemus will want to
+spawn a separate process just for the worker threads.
 
 Use this command to start the workers:
 
-    $ pipenv run python -m polyphemus.workproc
+    $ pipenv run worker
 
 For the server, [Gunicorn][] is a good choice (and included in the dependencies). Here's how you might invoke it:
 
@@ -58,6 +82,14 @@ You can provide a custom instance directory path to the workproc invocation as a
 [pipenv]: http://pipenv.org
 [yarn]: https://yarnpkg.com/en/
 [npm]: http://npmjs.com
+
+### Multi-machine Deployment
+
+When deploying on multiple machines, we'll start a single instance of the server
+and start several workers, each with machine-specific capabilites, on every
+machine.
+
+**TODO**: Finish this section after deployment testing on F1.
 
 
 Using Polyphemus
