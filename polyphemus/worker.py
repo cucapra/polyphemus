@@ -41,13 +41,13 @@ def work_threads(db, config):
     """
 
     # Toolchain dependent stage configuration
-    stage_make = stage_sdsoc_make if config['TOOLCHAIN'] == 'f1' else stage_f1_make
+    stage_make = stage_f1_make if config['TOOLCHAIN'] == 'f1' else stage_sdsoc_make
 
     stages = [stage_unpack, stage_make]
     if config['TOOLCHAIN'] == 'f1':
-        stages += [stage_zynq_fpga_execute]
-    else:
         stages += stage_afi, stage_f1_fpga_execute
+    else:
+        stages += [stage_zynq_fpga_execute]
 
     stages += [stage_make for i in range(config['PARALLELISM_MAKE'] - 1)]
 
