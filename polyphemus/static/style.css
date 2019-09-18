@@ -90,8 +90,13 @@ textarea {
   color: white;
 }
 
-.hlsed, .hlsing {
+.hlsed, .makeing {
   background-color: #db9a59;
+  color: white;
+}
+
+.generating_AFI {
+  background-color: #9bec29;
   color: white;
 }
 
