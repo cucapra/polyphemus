@@ -15,6 +15,10 @@ HLS_COMMAND_PREFIX = []
 # development environment and False in production.
 WORKER_THREADS = None
 
+# Assume the workers are using continous polling instead of socket base
+# communication
+POLL_MODE = False
+
 # The number of jobs to process in parallel in the "make" stage (which is the
 # expensive, long-running one).
 PARALLELISM_MAKE = 1

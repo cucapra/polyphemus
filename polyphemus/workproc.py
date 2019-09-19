@@ -9,7 +9,7 @@ from .db import JobDB
 from flask.config import Config
 
 
-INSTANCE_DIR = 'instance'
+INSTANCE_DIR = os.environ.get('INSTANCE_DIR') or 'instance'
 SOCKNAME = 'workproc.sock'
 KNOWN_STAGES_STR = ', '.join(worker.KNOWN_STAGES.keys())
 
@@ -127,12 +127,6 @@ if __name__ == '__main__':
                         action='store_true',
                         help='Poll instance directory for jobs every 2 seconds. Uses socket based communication from the server by default.')
 
-    # Instance directory to use for managing the jobs.
-    parser.add_argument('-i', '--instance-dir',
-                        help='Instance directory to use for tracking jobs. Defaults to directory specified in polyphemus.cfg.',
-                        type=str, action='store',
-                        default=INSTANCE_DIR, dest='instance',)
-
     # List of stages to start this worker with.
     parser.add_argument('-s', '--stages', nargs='*',
                         help='Stages to start this WorkProc with. Defaults to ones for the current toolchain. Known stages: %s.' % KNOWN_STAGES_STR,
@@ -141,7 +135,7 @@ if __name__ == '__main__':
     opts = parser.parse_args()
 
 
-    p = WorkProc(opts.instance)
+    p = WorkProc(INSTANCE_DIR)
     p.start(opts.stages)
 
     if opts.poll:

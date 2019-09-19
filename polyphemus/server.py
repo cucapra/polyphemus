@@ -11,12 +11,14 @@ from . import state
 import json
 import git
 
+INSTANCE_DIR = os.path.abspath(os.environ.get('INSTANCE_DIR') or 'instance')
+
 # Our Flask application.
-app = flask.Flask(__name__, instance_relative_config=True)
+app = flask.Flask(__name__, instance_path=INSTANCE_DIR, instance_relative_config=True)
 
 # Configuration. We include some defaults and allow overrides.
 app.config.from_object('polyphemus.config_default')
-app.config.from_pyfile('polyphemus.cfg', silent=True)
+app.config.from_pyfile('polyphemus.cfg')
 
 # Use worker threads by default in development.
 if app.config['WORKER_THREADS'] is None:
@@ -98,7 +100,7 @@ def notify_workers(jobname):
     Unless we're in WORKER_THREADS mode, we send a message to the
     (already-running) workproc.
     """
-    if not app.config['WORKER_THREADS']:
+    if not (app.config['WORKER_THREADS'] or app.config['POLL_MODE']):
         workproc.notify(app.instance_path, jobname)
 
 
