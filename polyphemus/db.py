@@ -128,7 +128,7 @@ class JobDB:
     def _gen_name(self):
         """Generate a new, random job name.
         """
-        return secrets.token_urlsafe(8)
+        return secrets.token_urlsafe(8).replace('-', '_')
 
     def _add(self, state, config):
         name = self._gen_name()
