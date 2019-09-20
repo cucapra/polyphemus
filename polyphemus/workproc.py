@@ -91,7 +91,7 @@ class WorkProc:
                 time.sleep(2)
 
         except KeyboardInterrupt:
-            print ("Shutting down worker.")
+            print("Shutting down worker.")
             pass
 
 
