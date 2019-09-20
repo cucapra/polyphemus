@@ -1,5 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
+<h2>Configuration</h2>
+
+<ul>
+  <li>
+    <b>Commit</b>: <a href="{{ config['commit_link']}}">{{ config['commit'] }}</a>
+  </li>
+  {% for key, value in config.items() %}
+  {% if key not in ('commit', 'commit_link') %}
+  <li>
+    <b>{{ key | capitalize }}</b>: {{ value }}
+  </li>
+  {% endif %}
+  {% endfor %}
+</ul>
+
 <h2>Start Job</h2>
 <form method="POST" action="/jobs" enctype="multipart/form-data">
     <p>

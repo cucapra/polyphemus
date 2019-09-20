@@ -18,7 +18,7 @@ app = flask.Flask(__name__, instance_path=INSTANCE_DIR, instance_relative_config
 
 # Configuration. We include some defaults and allow overrides.
 app.config.from_object('polyphemus.config_default')
-app.config.from_pyfile('polyphemus.cfg')
+app.config.from_pyfile('polyphemus.cfg', silent=True)
 
 # Use worker threads by default in development.
 if app.config['WORKER_THREADS'] is None:
@@ -41,6 +41,23 @@ STATUS_STRINGS = {
 }
 
 
+def git_commit_sha():
+    sha = git.Repo().head.object.hexsha[:7]
+    link = "{}/commit/{}".format(app.config['GH_REPO'], sha)
+    return sha, link
+
+
+# Configuration information
+sha, link = git_commit_sha()
+POLYPHEMUS_CONFIG = {
+    'commit': sha,
+    'commit_link': link,
+    'threads': app.config['WORKER_THREADS'],
+    'toolchain': app.config['TOOLCHAIN'],
+    'poll': app.config['POLL_MODE']
+}
+
+
 def _get(job_name):
     """Get a job by name, or raise a 404 error."""
     try:
@@ -56,10 +73,6 @@ def _unpad(s):
     return re.sub(r'(^|\s)0+', r'\1', s)
 
 
-def git_commit_sha():
-    sha =  git.Repo().head.object.hexsha[:7]
-    link = "{}/commit/{}".format(app.config['GH_REPO'], sha)
-    return sha, link
 
 @app.template_filter('dt')
 def _datetime_filter(value, withtime=True):
@@ -176,11 +189,10 @@ def jobs_csv():
 
 @app.route('/')
 def jobs_html():
-    sha, link = git_commit_sha()
     return flask.render_template(
         'joblist.html',
-        commit=sha,
-        commit_link=link,
+        name=app.config['NAME'],
+        config=POLYPHEMUS_CONFIG,
         jobs=db._all(),
         status_strings=STATUS_STRINGS,
     )
@@ -224,12 +236,8 @@ def show_job(name):
         log_lines = []
         interesting_lines = []
 
-    sha, link = git_commit_sha()
-
     return flask.render_template(
         'job.html',
-        commit=sha,
-        commit_link=link,
         job=job,
         config=json.dumps(job['config'], indent=4, sort_keys=True),
         status_strings=STATUS_STRINGS,
