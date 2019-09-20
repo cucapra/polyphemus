@@ -1,3 +1,6 @@
+# Name of the deployment
+NAME = "Polyphemus"
+
 # Github repository
 GH_REPO = "https://github.com/cucapra/polyphemus"
 
