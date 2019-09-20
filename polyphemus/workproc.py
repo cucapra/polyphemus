@@ -19,13 +19,17 @@ class WorkProc:
     notifications from a Unix domain socket.
     """
 
-    def __init__(self, basedir, db=None):
+    def __init__(self, basedir, name, db=None):
         """Create a container using a given base directory for the
         storage and socket. Optionally, provide a database object to use
         that instead of creating a new one (to, for example, reuse its
         internal locks).
         """
+        self.name = name
         self.basedir = os.path.abspath(basedir)
+
+        # Initialized when self.start is called.
+        self.stages = None
 
         # Load the configuration. We're just reusing Flask's simple
         # configuration component here.
@@ -34,7 +38,7 @@ class WorkProc:
         self.config.from_pyfile('polyphemus.cfg', silent=True)
 
         # Create the database.
-        self.db = db or JobDB(self.basedir)
+        self.db = db or JobDB(self.basedir, self.name)
 
     def start(self, stages_conf=None):
         """Create and start the worker threads. If stages_conf is None, create the
@@ -51,6 +55,8 @@ class WorkProc:
         for thread in worker.work_threads(stages, self.config, self.db):
             if not thread.is_alive():
                 thread.start()
+
+        self.db.add_stages(stages_conf)
 
     async def handle(self, client, addr):
         """Handle an incoming socket connection.
@@ -122,6 +128,11 @@ def valid_stage(stage):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Start Polyphemus Work Processor.')
 
+    # Name of the worker
+    parser.add_argument('-n', '--name',
+                        action='store', default='default_worker',
+                        type=str, help='Name of this worker.')
+
     # Start in polling mode instead of sockets.
     parser.add_argument('-p', '--poll',
                         action='store_true',
@@ -135,7 +146,7 @@ if __name__ == '__main__':
     opts = parser.parse_args()
 
 
-    p = WorkProc(INSTANCE_DIR)
+    p = WorkProc(INSTANCE_DIR, opts.name)
     p.start(opts.stages)
 
     if opts.poll:
