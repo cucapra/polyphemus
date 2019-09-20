@@ -74,7 +74,7 @@ class WorkProc:
         try:
             curio.run(curio.unix_server, sockpath, self.handle)
         except KeyboardInterrupt:
-            print ("Shutting down worker.")
+            print("Shutting down worker.")
             pass
         finally:
             os.unlink(sockpath)
