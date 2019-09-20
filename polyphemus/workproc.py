@@ -42,11 +42,11 @@ class WorkProc:
         strings in worker.KNOWN_STAGES then create workers mapping to those.
         """
         if stages_conf is None:
-            stages = worker.default_work_stages(self.config)
-        else:
-            stages = [worker.KNOWN_STAGES[stage] for stage in stages_conf]
+            stages_conf = worker.default_work_stages(self.config)
 
-        print(stages)
+        print("Worker", self.name, "running with stages:", stages_conf)
+
+        stages = [worker.KNOWN_STAGES[stage] for stage in stages_conf]
 
         for thread in worker.work_threads(stages, self.config, self.db):
             if not thread.is_alive():

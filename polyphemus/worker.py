@@ -6,21 +6,14 @@ import glob
 import re
 
 from .stages_common import work, task_config, update_make_conf
-from .worker_common import stage_unpack
-from . import state
+from . import state, worker_f1, worker_sdsoc, worker_common
 from .db import CODE_DIR
-
-from .worker_f1 import stage_f1_make, stage_afi, stage_f1_fpga_execute
-from .worker_sdsoc import stage_sdsoc_make, stage_zynq_fpga_execute
 
 # Strings corresponding to stages known to workers.
 KNOWN_STAGES = {
-    "unpack": stage_unpack,
-    "make_f1": stage_f1_make,
-    "make_sdsoc": stage_sdsoc_make,
-    "afi": stage_afi,
-    "exec_f1": stage_f1_fpga_execute,
-    "exec_zynq": stage_zynq_fpga_execute,
+    **worker_common.STAGE_NAMES,
+    **worker_f1.STAGE_NAMES,
+    **worker_sdsoc.STAGE_NAMES,
 }
 
 
@@ -45,17 +38,17 @@ class WorkThread(threading.Thread):
 
 
 def default_work_stages(config):
-    """List of functions for the configured toolchain.
+    """List of strings representing stages for the configured toolchain.
     """
 
     # Toolchain dependent stage configuration
-    stage_make = stage_f1_make if config['TOOLCHAIN'] == 'f1' else stage_sdsoc_make
-    stages = [stage_unpack, stage_make]
+    stage_make = 'make_f1' if config['TOOLCHAIN'] == 'f1' else 'make_sdsoc'
+    stages = ['unpack', stage_make]
 
     if config['TOOLCHAIN'] == 'f1':
-        stages += stage_afi, stage_f1_fpga_execute
+        stages += 'afi', 'exec_f1'
     else:
-        stages += [stage_zynq_fpga_execute]
+        stages += ['exec_zynq']
 
     stages += [stage_make for i in range(config['PARALLELISM_MAKE'] - 1)]
 

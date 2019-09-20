@@ -15,7 +15,7 @@ def stage_f1_make(db, config):
     """
 
     prefix = config["HLS_COMMAND_PREFIX"]
-    with work(db, state.MAKE, state.MAKE_PROGRESS, state.AFI_START) as task:
+    with work('make_f1', db, state.MAKE, state.MAKE_PROGRESS, state.AFI_START) as task:
         task_config(task, config)
 
         # Get the AWS platform ID for F1 builds.
@@ -54,7 +54,7 @@ def stage_afi(db, config):
     """Work stage: create the AWS FPGA binary and AFI from the *.xclbin
     (Xilinx FPGA binary file).
     """
-    with work(db, state.AFI_START, state.AFI, state.HLS_FINISH) as task:
+    with work('afi', db, state.AFI_START, state.AFI, state.HLS_FINISH) as task:
         # Clean up any generated files from previous runs.
         task.run(
             ['rm -rf to_aws *afi_id.txt \
@@ -124,7 +124,7 @@ def stage_f1_fpga_execute(db, config):
     hard-codes the root password as root---not terribly secure, so the
     board should clearly not be on a public network).
     """
-    with work(db, state.HLS_FINISH, state.RUN, state.DONE) as task:
+    with work('exec_f1', db, state.HLS_FINISH, state.RUN, state.DONE) as task:
 
         # Do nothing in this stage if we're just running estimation.
         if task['config'].get('estimate') or task['config'].get('skipexec'):
@@ -151,3 +151,10 @@ def stage_f1_fpga_execute(db, config):
             cwd=CODE_DIR,
             timeout=9000
         )
+
+
+STAGE_NAMES = {
+    "make_f1": stage_f1_make,
+    "afi": stage_afi,
+    "exec_f1": stage_f1_fpga_execute,
+}

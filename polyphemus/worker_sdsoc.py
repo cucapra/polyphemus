@@ -23,7 +23,7 @@ def stage_sdsoc_make(db, config):
 
     prefix = config["HLS_COMMAND_PREFIX"]
 
-    with work(db, state.MAKE, state.MAKE_PROGRESS, state.HLS_FINISH) as task:
+    with work('make_sdsoc', db, state.MAKE, state.MAKE_PROGRESS, state.HLS_FINISH) as task:
         task_config(task, config)
 
         # Simple make invocation for SDSoC.
@@ -60,7 +60,7 @@ def stage_zynq_fpga_execute(db, config):
     hard-codes the root password as root---not terribly secure, so the
     board should clearly not be on a public network).
     """
-    with work(db, state.HLS_FINISH, state.RUN, state.DONE) as task:
+    with work('exec_zynq', db, state.HLS_FINISH, state.RUN, state.DONE) as task:
 
         # Do nothing in this stage if we're just running estimation.
         if task['config'].get('estimate') or task['config'].get('skipexec'):
@@ -93,3 +93,9 @@ def stage_zynq_fpga_execute(db, config):
             ],
             timeout=120
         )
+
+
+STAGE_NAMES = {
+    'make_sdsoc': stage_sdsoc_make,
+    'exec_zynq': stage_zynq_fpga_execute,
+}
