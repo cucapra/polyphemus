@@ -7,6 +7,7 @@ import json
 from datetime import datetime
 
 JOBS_DIR = 'jobs'
+WORKER_INDEX_DIR = 'worker'
 ARCHIVE_NAME = 'code'
 CODE_DIR = 'code'
 INFO_FILENAME = 'info.json'
@@ -33,12 +34,28 @@ class BadJobError(Exception):
     """The requested job is corrupted and unusable.
     """
 
+class WorkerAlreadyExists(Exception):
+    """Another with the same name already exists for this sever instance.
+    """
+
 
 class JobDB:
-    def __init__(self, base_path):
+    def __init__(self, base_path, worker_name=None):
+        # Create jobs directory
         self.base_path = base_path
         os.makedirs(self.base_path, exist_ok=True)
         os.makedirs(os.path.join(self.base_path, JOBS_DIR), exist_ok=True)
+        os.makedirs(os.path.join(self.base_path, WORKER_INDEX_DIR), exist_ok=True)
+
+        # Create worker index
+        self.worker_index = None
+        if worker_name is not None:
+            self.worker_index = os.path.join(self.base_path, WORKER_INDEX_DIR, worker_name)
+            if os.path.exists(self.worker_index):
+                raise WorkerAlreadyExists('Worker with name {} already exists'.format(worker_name))
+
+            with open(self.worker_index, 'w+') as idx:
+                json.dump({}, idx)
 
         self.cv = threading.Condition()
 
@@ -92,7 +109,7 @@ class JobDB:
                     except json.JSONDecodeError:
                         continue
 
-    def _acquire(self, old_state, new_state):
+    def _acquire(self, stage_name, old_state, new_state):
         """Look for a job in `old_state`, update it to `new_state`, and
         return it.
 
@@ -105,9 +122,13 @@ class JobDB:
             raise NotFoundError()
 
         job['state'] = new_state
-        self.log(job['name'], 'acquired in state {}'.format(new_state))
+        self.log(job['name'], 'acquired in state {} by {}'.format(new_state, self.worker_index))
         with open(self._info_path(job['name']), 'w') as f:
             json.dump(job, f)
+
+        worker_idx = self._read_worker_index()
+        worker_idx[stage_name] = job['name']
+        self._update_worker_index(worker_idx)
 
         return job
 
@@ -135,6 +156,45 @@ class JobDB:
         os.mkdir(self.job_dir(name))
         job = self._init(name, state, config)
         return job
+
+    def _read_worker_index(self):
+        if self.worker_index is None:
+            raise Exception('DB without worker tried to read worker index')
+
+        with self.cv:
+            with open(self.worker_index, 'r') as idx:
+                return json.load(idx)
+
+    def _update_worker_index(self, new_index):
+        """Update the current workers index.
+        """
+        with self.cv:
+            with open(self.worker_index, 'w') as idx:
+                json.dump(new_index, idx)
+
+    def add_stages(self, stages):
+        """Add stages associated with this worker.
+        """
+        if self.worker_index is not None:
+            stage_json = {stage: '' for stage in stages}
+            self._update_worker_index(stage_json)
+
+    def remove_worker(self, worker_name):
+        """Remove worker associated with this job.
+        """
+        if self.worker_index is not None and os.path.exists(self.worker_index):
+            with self.cv:
+                os.remove(self.worker_index)
+
+    def all_workers(self):
+        """Returns all workers in the current db.
+        """
+        workers = {}
+        for worker in os.listdir(os.path.join(self.base_path, WORKER_INDEX_DIR)):
+            with open(os.path.join(self.base_path, WORKER_INDEX_DIR, worker)) as worker_fp:
+                workers[worker] = json.load(worker_fp)
+
+        return workers
 
     def add(self, state, config={}):
         """Add a new job and return it.
@@ -177,20 +237,28 @@ class JobDB:
             self._write(job)
             self.cv.notify_all()
 
-    def acquire(self, old_state, new_state):
+    def acquire(self, stage_name, old_state, new_state):
         """Block until a job is available in `old_state`, update its
-        state to `new_state`, and return it.
+        state to `new_state`, and return it. The `stage_name` thread of this
+        worker is associated with that job.
         """
         with self.cv:
             while True:
                 try:
-                    job = self._acquire(old_state, new_state)
+                    job = self._acquire(stage_name, old_state, new_state)
                 except NotFoundError:
                     pass
                 else:
                     break
                 self.cv.wait()
             return job
+
+    def release(self, stage_name):
+        """Remove the association of `stage_name` from it's job
+        """
+        worker_idx = self._read_worker_index()
+        worker_idx[stage_name] = ''
+        self._update_worker_index(worker_idx)
 
     def get(self, name):
         """Get the job with the given name.

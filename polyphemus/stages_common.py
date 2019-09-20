@@ -100,7 +100,7 @@ class JobTask:
 
 
 @contextmanager
-def work(db, old_state, temp_state, done_state_or_func):
+def work(stage_name, db, old_state, temp_state, done_state_or_func):
     """A context manager for acquiring a job temporarily in an
     exclusive way to work on it. Produce a `JobTask`.
     Done state can either be a valid state string or a function that
@@ -112,7 +112,7 @@ def work(db, old_state, temp_state, done_state_or_func):
     else:
         done_func = done_state_or_func
 
-    job = db.acquire(old_state, temp_state)
+    job = db.acquire(stage_name, old_state, temp_state)
     task = JobTask(db, job)
     try:
         yield task
@@ -124,6 +124,8 @@ def work(db, old_state, temp_state, done_state_or_func):
         task.set_state(state.FAIL)
     else:
         task.set_state(done_func(task))
+    finally:
+        db.release(stage_name)
 
 
 def task_config(task, config):

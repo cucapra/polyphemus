@@ -98,6 +98,7 @@ class WorkProc:
 
         except KeyboardInterrupt:
             print ("Shutting down worker.")
+            self.db.remove_worker(self.name)
             pass
 
 

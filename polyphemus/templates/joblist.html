@@ -32,6 +32,19 @@
     </p>
 </form>
 
+<h2>Workers</h2>
+{% for worker, stages in workers.items() %}
+  <u>{{ worker }}</u>
+  <ul>
+  {% for stage, job in stages.items() %}
+    <li>
+      <b>{{ stage }}</b>:
+      <a href="{{ url_for('show_job', name=job) }}">{{ job }}</a>
+    </li>
+  {% endfor %}
+  </ul>
+{% endfor %}
+
 <h2>Jobs</h2>
 <table>
     <thead>

@@ -24,8 +24,13 @@ app.config.from_pyfile('polyphemus.cfg', silent=True)
 if app.config['WORKER_THREADS'] is None:
     app.config['WORKER_THREADS'] = (app.env == 'development')
 
+# Create a default worker if WORKER_THREADS is active.
+worker_name = None
+if app.config['WORKER_THREADS']:
+    worker_name = 'default'
+
 # Connect to our database.
-db = JobDB(app.instance_path)
+db = JobDB(app.instance_path, worker_name)
 
 STATUS_STRINGS = {
     state.UPLOAD: "Uploaded",
@@ -103,7 +108,7 @@ def start_workers():
     try to launch it ourselves.
     """
     if app.config['WORKER_THREADS']:
-        proc = workproc.WorkProc(app.instance_path, db)
+        proc = workproc.WorkProc(app.instance_path, 'default', db)
         proc.start()
 
 
@@ -193,6 +198,7 @@ def jobs_html():
         'joblist.html',
         name=app.config['NAME'],
         config=POLYPHEMUS_CONFIG,
+        workers=db.all_workers(),
         jobs=db._all(),
         status_strings=STATUS_STRINGS,
     )
