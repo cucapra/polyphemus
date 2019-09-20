@@ -120,7 +120,7 @@ def valid_stage(stage):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Start Polyphemus Work Processor.')
+    parser = argparse.ArgumentParser(description='Start Polyphemus Work Process.')
 
     # Start in polling mode instead of sockets.
     parser.add_argument('-p', '--poll',
