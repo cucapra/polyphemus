@@ -7,16 +7,43 @@ from . import state
 from .stages_common import work, task_config, update_make_conf
 from .db import CODE_DIR
 
+# Directory to copy files during make stage.
+LOCAL_INSTANCE = '_local_instance'
+
+def rsync_cmd(src, dest, exclude=''):
+    return [
+        'rsync',
+        '-zavh',
+        src,
+        dest
+    ]
+
 def stage_f1_make(db, config):
-    """Work stage: run make command. Assumes that at the end of the make
-    command, work equivalent to the stage_hls is done, i.e., either
-    estimation data has been generated or a bitstream has been
-    generated.
+    """Make F1: Run make command on AWS F1. Done in four steps:
+
+    1. Copy the code files to local work directory.
+    2. Setup AWS tools.
+    3. Run make command.
+    4. Copy the built files back to the instance directory.
+
+    Assumes that at the end of the make command, work equivalent to the
+    stage_hls is done, i.e., either estimation data has been generated or a
+    bitstream has been generated.
     """
 
     prefix = config["HLS_COMMAND_PREFIX"]
     with work(db, state.MAKE, state.MAKE_PROGRESS, state.AFI_START) as task:
         task_config(task, config)
+
+        # Create a local working directory for the job.
+        work_dir = os.path.join(LOCAL_INSTANCE, task.job['name'])
+        os.mkdir(work_dir)
+
+        # Copy the task code files to local directory
+        task.run(
+            rsync_cmd(task.dir, work_dir),
+            relative_cwd=False, # Execute command in the worker's directory
+        )
 
         # Get the AWS platform ID for F1 builds.
         platform_script = (
@@ -46,7 +73,13 @@ def stage_f1_make(db, config):
         task.run(
             make_cmd,
             timeout=config["SYNTHESIS_TIMEOUT"],
-            cwd=CODE_DIR,
+            cwd=work_dir,
+        )
+
+        # Copy built files back to the job directory.
+        task.run(
+            rsync_cmd(work_dir, task.dir),
+            relative_cwd=False, # Execute command in the worker's directory
         )
 
 

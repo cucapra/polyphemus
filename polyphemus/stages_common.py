@@ -60,17 +60,24 @@ class JobTask:
         """
         self.db.set_state(self.job, state)
 
-    def run(self, cmd, capture=False, timeout=60, cwd='', **kwargs):
+    def run(self, cmd, capture=False, timeout=60, relative_cwd=True, cwd='', **kwargs):
         """Run a command and log its output.
 
-        Return an exited process object. If `capture`, then  the
+        Return an exited process object. If `capture`, then the
         standard output is *not* logged and is instead available as the return
         value's `stdout` field. Additional arguments are forwarded to
         `subprocess.run`.
 
+        If `relative_cwd` is True, use a path relative to the task's directory.
+        Otherwise use cwd.
+
         Raise an appropriate `WorkError` if the command fails.
         """
-        full_cwd = os.path.normpath(os.path.join(self.dir, cwd))
+        if relative_cwd:
+            full_cwd = os.path.normpath(os.path.join(self.dir, cwd))
+        else:
+            full_cwd = cwd
+
         self.log('$ {}'.format(_cmd_str(cmd)))
 
         log_filename = self.db._log_path(self.job['name'])
