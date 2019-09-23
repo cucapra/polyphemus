@@ -11,7 +11,7 @@ from . import state
 import json
 import git
 
-INSTANCE_DIR = os.path.abspath(os.environ.get('INSTANCE_DIR') or 'instance')
+INSTANCE_DIR = os.path.abspath(os.environ.get('POLYPHEMUS_DIR') or 'instance')
 
 # Our Flask application.
 app = flask.Flask(__name__, instance_path=INSTANCE_DIR, instance_relative_config=True)

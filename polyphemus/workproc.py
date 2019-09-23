@@ -9,7 +9,7 @@ from .db import JobDB
 from flask.config import Config
 
 
-INSTANCE_DIR = os.environ.get('INSTANCE_DIR') or 'instance'
+INSTANCE_DIR = os.environ.get('POLYPHEMUS_DIR') or 'instance'
 SOCKNAME = 'workproc.sock'
 KNOWN_STAGES_STR = ', '.join(worker.KNOWN_STAGES.keys())
 
