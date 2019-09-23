@@ -11,11 +11,14 @@ from .db import CODE_DIR
 LOCAL_INSTANCE = '_local_instance'
 
 def rsync_cmd(src, dest, exclude=''):
+    """
+    Generate command to recursively sync the contents of `src` to `dest`.
+    """
     return [
-        'rsync',
+        '/usr/bin/rsync',
         '-zavh',
-        src,
-        dest
+        os.path.join(src, ''), # Add a trailing slash so rsync sync the contents of src.
+        dest,
     ]
 
 def stage_f1_make(db, config):
@@ -36,13 +39,14 @@ def stage_f1_make(db, config):
         task_config(task, config)
 
         # Create a local working directory for the job.
-        work_dir = os.path.join(LOCAL_INSTANCE, task.job['name'])
+        work_dir = os.path.abspath(os.path.join(LOCAL_INSTANCE, task.job['name']))
         os.makedirs(work_dir, exist_ok=True)
 
         # Copy the task code files to local directory
         task.run(
             rsync_cmd(task.dir, work_dir),
             relative_cwd=False, # Execute command in the worker's directory
+            cwd=os.getcwd(),
         )
 
         # Get the AWS platform ID for F1 builds.
@@ -73,13 +77,15 @@ def stage_f1_make(db, config):
         task.run(
             make_cmd,
             timeout=config["SYNTHESIS_TIMEOUT"],
-            cwd=work_dir,
+            relative_cwd=False,
+            cwd=os.path.join(work_dir, CODE_DIR),
         )
 
         # Copy built files back to the job directory.
         task.run(
             rsync_cmd(work_dir, task.dir),
             relative_cwd=False, # Execute command in the worker's directory
+            cwd=os.getcwd()
         )
 
 
