@@ -37,7 +37,7 @@ def stage_f1_make(db, config):
 
         # Create a local working directory for the job.
         work_dir = os.path.join(LOCAL_INSTANCE, task.job['name'])
-        os.mkdir(work_dir)
+        os.makedirs(work_dir, exist_ok=True)
 
         # Copy the task code files to local directory
         task.run(
