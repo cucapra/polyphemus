@@ -18,7 +18,7 @@ HLS_COMMAND_PREFIX = []
 # development environment and False in production.
 WORKER_THREADS = None
 
-# Assume the workers are using continous polling instead of socket base
+# Assume the workers are using continous polling instead of socket-based
 # communication
 POLL_MODE = False
 
