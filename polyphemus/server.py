@@ -181,7 +181,6 @@ def jobs_html():
     sha, link = git_commit_sha()
     return flask.render_template(
         'joblist.html',
-        name=app.config['NAME'],
         commit={'sha': sha, 'link': link},
         jobs=db._all(),
         status_strings=STATUS_STRINGS,
