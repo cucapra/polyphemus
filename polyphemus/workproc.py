@@ -74,8 +74,7 @@ class WorkProc:
         try:
             curio.run(curio.unix_server, sockpath, self.handle)
         except KeyboardInterrupt:
-            print("Shutting down worker.")
-            pass
+            print ("Shutting down worker.")
         finally:
             os.unlink(sockpath)
 
@@ -91,8 +90,7 @@ class WorkProc:
                 time.sleep(2)
 
         except KeyboardInterrupt:
-            print("Shutting down worker.")
-            pass
+            print ("Shutting down worker.")
 
 
 def notify(basedir, jobname):

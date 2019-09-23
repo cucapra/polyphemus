@@ -47,17 +47,6 @@ def git_commit_sha():
     return sha, link
 
 
-# Configuration information
-sha, link = git_commit_sha()
-POLYPHEMUS_CONFIG = {
-    'commit': sha,
-    'commit_link': link,
-    'threads': app.config['WORKER_THREADS'],
-    'toolchain': app.config['TOOLCHAIN'],
-    'poll': app.config['POLL_MODE']
-}
-
-
 def _get(job_name):
     """Get a job by name, or raise a 404 error."""
     try:
@@ -189,10 +178,11 @@ def jobs_csv():
 
 @app.route('/')
 def jobs_html():
+    sha, link = git_commit_sha()
     return flask.render_template(
         'joblist.html',
         name=app.config['NAME'],
-        config=POLYPHEMUS_CONFIG,
+        commit={'sha': sha, 'link': link},
         jobs=db._all(),
         status_strings=STATUS_STRINGS,
     )
