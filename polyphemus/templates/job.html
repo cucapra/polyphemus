@@ -31,7 +31,7 @@
         </form>
     </li>
     <li>
-    <b>config:</b> <pre> {{ config }} </pre>
+    <b>config:</b> <pre> {{ json_config }} </pre>
     </li>
     {% for key, value in job.items() %}
     {% if key not in ('started', 'state', 'name', 'log', 'config') %}

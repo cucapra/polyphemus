@@ -228,7 +228,7 @@ def show_job(name):
     return flask.render_template(
         'job.html',
         job=job,
-        config=json.dumps(job['config'], indent=4, sort_keys=True),
+        json_config=json.dumps(job['config'], indent=4, sort_keys=True),
         status_strings=STATUS_STRINGS,
         log=''.join(log_lines),
         interesting=''.join(interesting_lines),
