@@ -56,43 +56,45 @@ def stage_f1_make(db, config):
             cwd=os.getcwd(),
         )
 
-        # Get the AWS platform ID for F1 builds.
-        platform_script = (
-            'cd $AWS_FPGA_REPO_DIR; '
-            'source ./sdaccel_setup.sh > /dev/null; '
-            'echo $AWS_PLATFORM; '
-        )
-        proc = task.run([platform_script], capture=True, shell=True)
-        aws_platform = proc.stdout.decode('utf8').strip()
+        try:
+            # Get the AWS platform ID for F1 builds.
+            platform_script = (
+                'cd $AWS_FPGA_REPO_DIR; '
+                'source ./sdaccel_setup.sh > /dev/null; '
+                'echo $AWS_PLATFORM; '
+            )
+            proc = task.run([platform_script], capture=True, shell=True)
+            aws_platform = proc.stdout.decode('utf8').strip()
 
-        make = [
-            'make',
-            'MODE={}'.format(task['mode']),
-            'DEVICE={}'.format(aws_platform),
-        ]
+            make = [
+                'make',
+                'MODE={}'.format(task['mode']),
+                'DEVICE={}'.format(aws_platform),
+            ]
 
-        make_cmd = prefix + make
-        if task['config']['directives']:
-            make_cmd.append(
-                'DIRECTIVES={}'.format(task['config']['directives'])
+            make_cmd = prefix + make
+            if task['config']['directives']:
+                make_cmd.append(
+                    'DIRECTIVES={}'.format(task['config']['directives'])
+                )
+
+            # Dry run the make command and extract relevant conf variables.
+            update_make_conf(make_cmd, task, db, config)
+
+            # Run the make target
+            task.run(
+                make_cmd,
+                timeout=config["SYNTHESIS_TIMEOUT"],
+                cwd=os.path.join(work_dir, CODE_DIR),
             )
 
-        # Dry run the make command and extract relevant conf variables.
-        update_make_conf(make_cmd, task, db, config)
-
-        # Run the make target
-        task.run(
-            make_cmd,
-            timeout=config["SYNTHESIS_TIMEOUT"],
-            cwd=os.path.join(work_dir, CODE_DIR),
-        )
-
-        # Copy built files back to the job directory.
-        task.run(
-            rsync_cmd(work_dir, task.dir, EXCLUDED_RSYNC),
-            timeout=600,
-            cwd=os.getcwd()
-        )
+        finally:
+            # Copy built files back to the job directory.
+            task.run(
+                rsync_cmd(work_dir, task.dir, EXCLUDED_RSYNC),
+                timeout=600,
+                cwd=os.getcwd()
+            )
 
 
 def stage_afi(db, config):
