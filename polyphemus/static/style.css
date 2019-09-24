@@ -90,7 +90,7 @@ textarea {
   color: white;
 }
 
-.hlsed, .makeing {
+.makeing {
   background-color: #db9a59;
   color: white;
 }
@@ -103,4 +103,10 @@ textarea {
 .fpga_executing {
   background-color: #be29ec;
   color: white;
+}
+
+.hlsed, .starting_AFI {
+  background-color: #778899;
+  color: white;
+  text-align: left;
 }
