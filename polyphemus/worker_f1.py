@@ -55,6 +55,8 @@ def stage_afi(db, config):
     (Xilinx FPGA binary file).
     """
     with work(db, state.AFI_START, state.AFI, state.HLS_FINISH) as task:
+        # sw_emu and hw_emu does not require AFI
+        if not task['mode'] == 'hw': return
         # Clean up any generated files from previous runs.
         task.run(
             ['rm -rf to_aws *afi_id.txt \
