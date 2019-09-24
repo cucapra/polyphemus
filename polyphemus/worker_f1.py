@@ -9,17 +9,25 @@ from .db import CODE_DIR
 
 # Directory to copy files during make stage.
 LOCAL_INSTANCE = '_local_instance'
+EXCLUDED_RSYNC = ['info.json', 'log.txt']
 
-def rsync_cmd(src, dest, exclude=''):
+def rsync_cmd(src, dest, excludes=[]):
     """
     Generate command to recursively sync the contents of `src` to `dest`.
     """
-    return [
-        '/usr/bin/rsync',
+    cmd = ['rsync']
+
+    # Add excluded files.
+    for ex in excludes:
+        cmd.extend(['--exclude', ex])
+
+    cmd.extend([
         '-zavh',
         os.path.join(src, ''), # Add a trailing slash so rsync sync the contents of src.
         dest,
-    ]
+    ])
+
+    return cmd
 
 def stage_f1_make(db, config):
     """Make F1: Run make command on AWS F1. Done in four steps:
