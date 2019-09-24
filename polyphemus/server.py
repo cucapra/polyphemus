@@ -30,11 +30,11 @@ db = JobDB(app.instance_path)
 STATUS_STRINGS = {
     state.UPLOAD: "Uploaded",
     state.UNPACK: "Unpacking",
-    state.HLS_FINISH: "Synthesized",
-    state.MAKE: "make",
-    state.MAKE_PROGRESS: "make-ing",
-    state.AFI_START: "start AFI",
-    state.AFI: "generating AFI",
+    state.HLS_FINISH: "Start Executing",
+    state.MAKE: "Start make",
+    state.MAKE_PROGRESS: "Makeing",
+    state.AFI_START: "Start AFI",
+    state.AFI: "Generating AFI",
     state.RUN: "Running",
     state.DONE: "Done",
     state.FAIL: "Failed",
@@ -127,6 +127,7 @@ def list_files(job_name):
                 yield os.path.join(dp, fn)
 
 
+# Upload a job to the server.
 @app.route('/jobs', methods=['POST'])
 def add_job():
     config = get_config(request.values)
@@ -176,6 +177,7 @@ def jobs_csv():
     return csv_data, 200, {'Content-Type': 'text/csv'}
 
 
+# Get the list of all jobs.
 @app.route('/')
 def jobs_html():
     sha, link = git_commit_sha()
@@ -187,6 +189,8 @@ def jobs_html():
     )
 
 
+# Either get the job information (through the GET route) or update the job
+# information (through the POST route).
 @app.route('/jobs/<name>.html', methods=['GET', 'POST'])
 def show_job(name):
     job = _get(name)
@@ -230,6 +234,7 @@ def show_job(name):
         job=job,
         json_config=json.dumps(job['config'], indent=4, sort_keys=True),
         status_strings=STATUS_STRINGS,
+        update_states=state.UNLOCKED_STATES,
         log=''.join(log_lines),
         interesting=''.join(interesting_lines),
     )

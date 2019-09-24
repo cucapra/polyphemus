@@ -34,3 +34,5 @@ AFI = "generating_AFI"
 RUN = "fpga_executing"
 DONE = "done"
 FAIL = "failed"
+
+UNLOCKED_STATES = MAKE, AFI_START, HLS_FINISH, DONE, FAIL
