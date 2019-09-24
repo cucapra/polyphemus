@@ -53,7 +53,6 @@ def stage_f1_make(db, config):
         # Copy the task code files to local directory
         task.run(
             rsync_cmd(task.dir, work_dir),
-            relative_cwd=False, # Execute command in the worker's directory
             cwd=os.getcwd(),
         )
 
@@ -85,7 +84,6 @@ def stage_f1_make(db, config):
         task.run(
             make_cmd,
             timeout=config["SYNTHESIS_TIMEOUT"],
-            relative_cwd=False,
             cwd=os.path.join(work_dir, CODE_DIR),
         )
 
@@ -93,7 +91,6 @@ def stage_f1_make(db, config):
         task.run(
             rsync_cmd(work_dir, task.dir, EXCLUDED_RSYNC),
             timeout=600,
-            relative_cwd=False, # Execute command in the worker's directory
             cwd=os.getcwd()
         )
 
