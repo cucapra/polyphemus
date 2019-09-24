@@ -56,7 +56,7 @@ def stage_afi(db, config):
     """
     with work(db, state.AFI_START, state.AFI, state.HLS_FINISH) as task:
         # sw_emu and hw_emu do not require AFI
-        if not task['mode'] == 'hw': 
+        if task['mode'] != 'hw': 
             task.log('skipping AFI stage for {}'.format(task['mode']))
             return
         # Clean up any generated files from previous runs.
