@@ -91,7 +91,8 @@ def stage_f1_make(db, config):
 
         # Copy built files back to the job directory.
         task.run(
-            rsync_cmd(work_dir, task.dir),
+            rsync_cmd(work_dir, task.dir, EXCLUDED_RSYNC),
+            timeout=600,
             relative_cwd=False, # Execute command in the worker's directory
             cwd=os.getcwd()
         )
