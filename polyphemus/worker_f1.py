@@ -111,6 +111,7 @@ def stage_afi(db, config):
         if task['mode'] != 'hw':
             task.log('skipping AFI stage for {}'.format(task['mode']))
             return
+
         # Clean up any generated files from previous runs.
         cleanup_cmd = [
             'rm', '-rf', 'to_aws', '*afi_id.txt', '*.tar',
@@ -124,8 +125,9 @@ def stage_afi(db, config):
 
         # Find *.xclbin file from hardware synthesis.
         xcl_dir = os.path.join(task.dir, 'code', 'xclbin')
-        xclbin_file_path = glob.glob(
-            os.path.join(xcl_dir, '*hw.*.xclbin'))
+        xclbin_file_path = glob.glob(os.path.join(xcl_dir, '*hw.*.xclbin'))
+        assert xclbin_file_path, "Cannot find .xclbin file for AFI generation."
+
         xclbin_file = os.path.basename(xclbin_file_path[0])
 
         # Generate the AFI and AWS binary.
@@ -149,6 +151,8 @@ def stage_afi(db, config):
 
         # Get the AFI ID.
         afi_id_files = glob.glob(os.path.join(xcl_dir, '*afi_id.txt'))
+        assert afi_id_files, "Failed to find *afi_id.txt file."
+
         with open(afi_id_files[0]) as f:
             afi_id = json.loads(f.read())['FpgaImageId']
 
