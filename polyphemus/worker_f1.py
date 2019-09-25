@@ -54,6 +54,7 @@ def stage_f1_make(db, config):
         task.run(
             rsync_cmd(task.dir, work_dir),
             cwd=os.getcwd(),
+            timeout=600,
         )
 
         try:
@@ -92,7 +93,7 @@ def stage_f1_make(db, config):
             # Copy built files back to the job directory.
             task.run(
                 rsync_cmd(work_dir, task.dir, EXCLUDED_RSYNC),
-                timeout=600,
+                timeout=1200,
                 cwd=os.getcwd()
             )
 
