@@ -2,6 +2,7 @@ import os
 import glob
 import json
 import time
+import shutil
 
 from . import state
 from .stages_common import work, task_config, update_make_conf
@@ -96,6 +97,9 @@ def stage_f1_make(db, config):
                 timeout=1200,
                 cwd=os.getcwd()
             )
+
+            # Remove the local instance directory after make is done.
+            shutil.rmtree(work_dir)
 
 
 def stage_afi(db, config):
