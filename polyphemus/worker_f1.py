@@ -112,13 +112,8 @@ def stage_afi(db, config):
             task.log('skipping AFI stage for {}'.format(task['mode']))
             return
 
-        # Clean up any generated files from previous runs.
-        cleanup_cmd = [
-            'rm', '-rf', 'to_aws', '*afi_id.txt', '*.tar',
-            '*agfi_id.txt', 'manifest.txt'
-        ]
         task.run(
-            cleanup_cmd,
+            ['rm -rf to_aws *afi_id.txt *.tar *agfi_id.txt manifest.txt'],
             cwd=os.path.join(CODE_DIR, 'xclbin'),
             shell=True,
         )
