@@ -105,8 +105,12 @@ textarea {
   color: white;
 }
 
-.make, .hlsed, .starting_AFI {
+.make {
+  background-color: #a4afbb;
+  color: white;
+}
+
+.hlsed, .starting_AFI {
   background-color: #778899;
   color: white;
-  text-align: left;
 }
