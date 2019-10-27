@@ -3,10 +3,10 @@
 PORT ?= 8000
 
 dev:
-	FLASK_APP=polyphemus.server FLASK_ENV=development pipenv run flask run
+	FLASK_APP=polyphemus.server FLASK_ENV=development pipenv run flask run --no-reload
 
 serve:
-	pipenv run gunicorn --bind 0.0.0.0:$(PORT) polyphemus.server:app
+	pipenv run gunicorn --bind 0.0.0.0:$(PORT) -k eventlet polyphemus.server:app
 
 clean:
 	rm -rf instance

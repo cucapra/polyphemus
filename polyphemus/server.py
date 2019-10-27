@@ -1,15 +1,19 @@
 import flask
-from flask import request
 import os
-from io import StringIO
 import csv
-from . import workproc
-from .db import JobDB, ARCHIVE_NAME, NotFoundError, BadJobError
-from datetime import datetime
 import re
-from . import state
 import json
 import git
+
+from enum import Enum
+from io import StringIO
+from datetime import datetime
+from flask import request
+from flask_socketio import SocketIO, emit
+
+from . import state
+from . import workproc
+from .db import JobDB, ARCHIVE_NAME, NotFoundError, BadJobError
 
 INSTANCE_DIR = os.path.abspath(os.environ.get('POLYPHEMUS_DIR') or 'instance')
 
@@ -26,6 +30,9 @@ if app.config['WORKER_THREADS'] is None:
 
 # Connect to our database.
 db = JobDB(app.instance_path)
+
+# Start socketio
+socketio = SocketIO(app)
 
 STATUS_STRINGS = {
     state.UPLOAD: "Uploaded",
@@ -279,3 +286,18 @@ def job_file(name, filename):
 
     # Send the file.
     return flask.send_from_directory(db.job_dir(name), filename, mimetype=mime)
+
+
+@socketio.on('update log')
+def test_job(job_name):
+    log_filename = None;
+    try:
+        log_filename = db._log_path(job_name)
+        lines = app.config['LOG_PREVIEW_LINES']
+        with open(log_filename, 'r') as f:
+            file = list(f)
+            log_lines = file[-lines:]
+    except IOError:
+        return { 'status': 'failed' }
+
+    return { 'status': 'ok', 'data': ''.join(log_lines) }

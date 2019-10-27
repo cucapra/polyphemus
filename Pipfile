@@ -8,6 +8,8 @@ flask = "*"
 gunicorn = "*"
 curio = "*"
 gitpython = "*"
+flask-socketio = "*"
+eventlet = "*"
 
 [dev-packages]
 

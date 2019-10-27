@@ -56,5 +56,30 @@
 <pre class="log">{{ interesting }}</pre>
 {% endif %}
 <h2> Log </h2>
-<pre class="log">{{ log }}</pre>
+<pre id="log" class="log">{{ log }}</pre>
+{% endblock %}
+
+{% block script %}
+<script>
+
+let timer = null;
+let log = document.getElementById('log');
+let POLL_TIME = 3000
+
+function updateLog(newLog) {
+  if (newLog.status == 'ok') log.innerHTML = newLog.data;
+}
+
+function getLog() {
+  socket.emit('update log', "{{ job.name }}", (data) => updateLog(data));
+}
+
+socket.on('connect', () => {
+  timer = window.setInterval(getLog, POLL_TIME);
+})
+
+socket.on('disconnect', () => {
+  timer && window.clearInterval(timer);
+})
+</script>
 {% endblock %}
