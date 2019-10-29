@@ -31,7 +31,7 @@ if app.config['WORKER_THREADS'] is None:
 # Connect to our database.
 db = JobDB(app.instance_path)
 
-# Start socketio
+# Start socketio.
 socketio = SocketIO(app)
 
 STATUS_STRINGS = {
