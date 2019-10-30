@@ -6,7 +6,7 @@ dev:
 	FLASK_APP=polyphemus.server FLASK_ENV=development pipenv run flask run --no-reload
 
 serve:
-	pipenv run gunicorn --bind 0.0.0.0:$(PORT) -k eventlet polyphemus.server:app
+	pipenv run gunicorn --bind 0.0.0.0:$(PORT) -k eventlet --workers 4 polyphemus.server:app
 
 clean:
 	rm -rf instance
