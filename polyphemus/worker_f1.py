@@ -192,9 +192,12 @@ def stage_f1_fpga_execute(db, config):
         # On F1, use the run either the real hardware-augmented binary or the
         # emulation executable.
         if task['mode'] == 'hw':
+            # Run fpga cleanup command
+            cleanup_cmd = ['sudo', 'fpga-clear-local-image', '-S', '0']
+            task.run(cleanup_cmd, cwd=CODE_DIR, timeout=600)
+
             exe_cmd = ['sudo', 'sh', '-c',
-                       'source /opt/xilinx/xrt/setup.sh ;\
-                        ./{}'.format(config['EXECUTABLE_NAME'])]
+                       'source /opt/xilinx/xrt/setup.sh ; ./{}'.format(config['EXECUTABLE_NAME'])]
         else:
             exe_cmd = [
                 'sh', '-c',
@@ -204,8 +207,4 @@ def stage_f1_fpga_execute(db, config):
                     config['EXECUTABLE_NAME']
                 )
             ]
-        task.run(
-            exe_cmd,
-            cwd=CODE_DIR,
-            timeout=9000
-        )
+        task.run(exe_cmd, cwd=CODE_DIR, timeout=9000)
