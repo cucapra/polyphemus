@@ -62,6 +62,7 @@
 {% block script %}
 <script>
 
+let socket = io();
 let timer = null;
 let log = document.getElementById('log');
 let POLL_TIME = 3000

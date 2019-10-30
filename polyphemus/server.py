@@ -289,15 +289,14 @@ def job_file(name, filename):
 
 
 @socketio.on('update log')
-def test_job(job_name):
-    log_filename = None;
+def update_log(job_name):
     try:
         log_filename = db._log_path(job_name)
         lines = app.config['LOG_PREVIEW_LINES']
         with open(log_filename, 'r') as f:
             file = list(f)
             log_lines = file[-lines:]
+            return { 'status': 'ok', 'data': ''.join(log_lines) }
     except IOError:
         return { 'status': 'failed' }
 
-    return { 'status': 'ok', 'data': ''.join(log_lines) }
