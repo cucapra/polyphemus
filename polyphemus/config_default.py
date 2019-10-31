@@ -20,7 +20,7 @@ WORKER_THREADS = None
 
 # Assume the workers are using continous polling instead of socket-based
 # communication
-POLL_MODE = False
+POLL_MODE = True
 
 # The number of jobs to process in parallel in the "make" stage (which is the
 # expensive, long-running one).
