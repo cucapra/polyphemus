@@ -4,7 +4,7 @@ import json
 import time
 import shutil
 
-from . import state
+from . import state, modes_f1
 from .stages_common import work, task_config, update_make_conf
 from .db import CODE_DIR
 
@@ -30,6 +30,20 @@ def rsync_cmd(src, dest, excludes=[]):
 
     return cmd
 
+def stage_after_make(task):
+    """Make stage can transition into three different stages depending on the
+    modes.
+    MAKE -> AFI     when mode == hw
+    MAKE -> DONE    when mode == estimate
+    MAKE -> EXECUTE when mode == *_emu
+    """
+    if task['mode'] in [modes_f1.SW_EMU, modes_f1.HW_EMU]:
+        return state.RUN
+    elif task['mode'] == modes_f1.ESTIMATE:
+        return state.DONE
+    else:
+        return state.AFI_START
+
 def stage_f1_make(db, config):
     """Make F1: Run make command on AWS F1. Done in four steps:
 
@@ -44,7 +58,7 @@ def stage_f1_make(db, config):
     """
 
     prefix = config["HLS_COMMAND_PREFIX"]
-    with work(db, state.MAKE, state.MAKE_PROGRESS, state.AFI_START) as task:
+    with work(db, state.MAKE, state.MAKE_PROGRESS, stage_after_make) as task:
         task_config(task, config)
 
         # Create a local working directory for the job.
@@ -107,10 +121,6 @@ def stage_afi(db, config):
     (Xilinx FPGA binary file).
     """
     with work(db, state.AFI_START, state.AFI, state.HLS_FINISH) as task:
-        # sw_emu and hw_emu do not require AFI
-        if task['mode'] != 'hw':
-            task.log('skipping AFI stage for {}'.format(task['mode']))
-            return
 
         task.run(
             ['rm -rf to_aws *afi_id.txt *.tar *agfi_id.txt manifest.txt'],
@@ -191,7 +201,7 @@ def stage_f1_fpga_execute(db, config):
 
         # On F1, use the run either the real hardware-augmented binary or the
         # emulation executable.
-        if task['mode'] == 'hw':
+        if task['mode'] == modes_f1.HW:
             # Run fpga cleanup command
             cleanup_cmd = ['sudo', 'fpga-clear-local-image', '-S', '0']
             task.run(cleanup_cmd, cwd=CODE_DIR, timeout=600)
