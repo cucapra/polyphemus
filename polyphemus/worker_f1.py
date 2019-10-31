@@ -62,15 +62,17 @@ def stage_f1_make(db, config):
         task_config(task, config)
 
         # Create a local working directory for the job.
-        work_dir = os.path.abspath(os.path.join(LOCAL_INSTANCE, task.job['name']))
-        os.makedirs(work_dir, exist_ok=True)
+        work_dir = task.dir
 
         # Copy the task code files to local directory
-        task.run(
-            rsync_cmd(task.dir, work_dir),
-            cwd=os.getcwd(),
-            timeout=600,
-        )
+        if task['mode'] == modes_f1.HW:
+            work_dir = os.path.abspath(os.path.join(LOCAL_INSTANCE, task.job['name']))
+            os.makedirs(work_dir, exist_ok=True)
+            task.run(
+                rsync_cmd(task.dir, work_dir),
+                cwd=os.getcwd(),
+                timeout=600,
+            )
 
         try:
             # Get the AWS platform ID for F1 builds.
@@ -105,15 +107,16 @@ def stage_f1_make(db, config):
             )
 
         finally:
-            # Copy built files back to the job directory.
-            task.run(
-                rsync_cmd(work_dir, task.dir, EXCLUDED_RSYNC),
-                timeout=1200,
-                cwd=os.getcwd()
-            )
+            if task['mode'] == modes_f1.HW:
+                # Copy built files back to the job directory.
+                task.run(
+                    rsync_cmd(work_dir, task.dir, EXCLUDED_RSYNC),
+                    timeout=1200,
+                    cwd=os.getcwd()
+                )
 
-            # Remove the local instance directory after make is done.
-            shutil.rmtree(work_dir)
+                # Remove the local instance directory after make is done.
+                shutil.rmtree(work_dir)
 
 
 def stage_afi(db, config):
