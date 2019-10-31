@@ -38,7 +38,7 @@ def stage_after_make(task):
     MAKE -> EXECUTE when mode == *_emu
     """
     if task['mode'] in [modes_f1.SW_EMU, modes_f1.HW_EMU]:
-        return state.RUN
+        return state.HLS_FINISH
     elif task['mode'] == modes_f1.ESTIMATE:
         return state.DONE
     else:
