@@ -5,6 +5,10 @@ import os
 from contextlib import contextmanager
 import json
 from datetime import datetime
+from collections import defaultdict
+import random
+
+from . import state
 
 JOBS_DIR = 'jobs'
 ARCHIVE_NAME = 'code'
@@ -35,11 +39,21 @@ class BadJobError(Exception):
 
 
 class JobDB:
+    """A wrapper around the jobs directory. Worker threads use this to
+    acquire potential jobs and move them along the state transition graph.
+    """
     def __init__(self, base_path):
         self.base_path = base_path
         os.makedirs(self.base_path, exist_ok=True)
         os.makedirs(os.path.join(self.base_path, JOBS_DIR), exist_ok=True)
 
+        # Mapping from job_id to its state
+        self.job_cache = {}
+
+        # Lock for the cache.
+        self.cache_lock = threading.Condition()
+
+        # Lock for the DB.
         self.cv = threading.Condition()
 
     def job_dir(self, job_name):
@@ -76,14 +90,23 @@ class JobDB:
         with open(self._info_path(job['name']), 'w') as f:
             json.dump(job, f)
 
-    def _all(self):
+    def _all(self, with_cache=False):
         """Read all the jobs.
 
         Corrupted/unreadable jobs are not included in the list. This is
         probably pretty slow, and it's O(n) where n is the total number
         of jobs in the system.
+
+        When `with_cache` is True, prioritize returning jobs that are not
+        in a done state in the cache.
         """
-        for name in os.listdir(os.path.join(self.base_path, JOBS_DIR)):
+        traversal = list(os.listdir(os.path.join(self.base_path, JOBS_DIR)))
+        random.shuffle(traversal)
+
+        for name in traversal:
+            if with_cache and self.job_cache.get(name) in [state.DONE, state.FAIL]:
+                continue
+
             path = self._info_path(name)
             if os.path.isfile(path):
                 with open(path) as f:
@@ -92,20 +115,65 @@ class JobDB:
                     except json.JSONDecodeError:
                         continue
 
+        if with_cache:
+            for job, job_state in self.job_cache.items():
+                if job_state in [state.DONE, state.FAIL]:
+                    path = self._info_path(name)
+                    if os.path.isfile(path):
+                        with open(path) as f:
+                            try:
+                                yield json.load(f)
+                            except json.JSONDecodeError:
+                                continue
+
+
     def _acquire(self, old_state, new_state):
         """Look for a job in `old_state`, update it to `new_state`, and
         return it.
 
+        First check the job_cache for matching jobs and test if they are still
+        in that state. If no job is found in that state, call _all.
+
         Raise a `NotFoundError` if there is no such job.
         """
-        for job in self._all():
+
+        job = None
+
+        # Try to find a job in old_state in the job cache.
+        for job_id, state in self.job_cache.items():
+            # If the cache state doesn't match old_state, skip the job
+            if state != old_state:
+                continue
+
+            # Cache can contain old state data. Get the actual data by reading
+            # the db.
+            job = self._read(job_id)
             if job['state'] == old_state:
                 break
-        else:
-            raise NotFoundError()
+            else:
+                # If the cached data was wrong, update the cache.
+                with self.cache_lock:
+                    self.job_cache[job_id] = job['state']
+
+
+        # If there are no matching jobs in the cache, walk the jobs dir.
+        if job is None:
+            for job in self._all(with_cache=True):
+                if job['state'] == old_state:
+                    break
+                else:
+                    with self.cache_lock:
+                        self.job_cache[job['name']] = job['state']
+            else:
+                raise NotFoundError()
 
         job['state'] = new_state
+
+        with self.cache_lock:
+            self.job_cache[job['name']] = job['state']
+
         self.log(job['name'], 'acquired in state {}'.format(new_state))
+        print(job['name'], 'acquired in state {}. Cache size: {}.'.format(new_state, len(self.job_cache)))
         with open(self._info_path(job['name']), 'w') as f:
             json.dump(job, f)
 
