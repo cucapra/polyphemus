@@ -160,6 +160,11 @@ class JobDB:
         if job is None:
             for job in self._all(with_cache=True):
                 if job['state'] == old_state:
+                    job['state'] = new_state
+                    self.log(job['name'], 'acquired in state {}'.format(new_state))
+                    print(job['name'], 'acquired in state {}. Cache size: {}.'.format(new_state, len(self.job_cache)))
+                    with open(self._info_path(job['name']), 'w') as f:
+                        json.dump(job, f)
                     break
                 else:
                     with self.cache_lock:
@@ -167,15 +172,8 @@ class JobDB:
             else:
                 raise NotFoundError()
 
-        job['state'] = new_state
-
         with self.cache_lock:
             self.job_cache[job['name']] = job['state']
-
-        self.log(job['name'], 'acquired in state {}'.format(new_state))
-        print(job['name'], 'acquired in state {}. Cache size: {}.'.format(new_state, len(self.job_cache)))
-        with open(self._info_path(job['name']), 'w') as f:
-            json.dump(job, f)
 
         return job
 
