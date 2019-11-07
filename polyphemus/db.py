@@ -47,11 +47,11 @@ class JobDB:
         os.makedirs(self.base_path, exist_ok=True)
         os.makedirs(os.path.join(self.base_path, JOBS_DIR), exist_ok=True)
 
-        # Mapping from job_id to its state
-        self.job_cache = {}
+        # Cache of jobs that are in DONE or FAIL state.
+        self.finished_cache = set()
 
         # Lock for the cache.
-        self.cache_lock = threading.Condition()
+        self.cache_lock = threading.Lock()
 
         # Lock for the DB.
         self.cv = threading.Condition()
@@ -100,13 +100,21 @@ class JobDB:
         When `with_cache` is True, prioritize returning jobs that are not
         in a done state in the cache.
         """
-        traversal = list(os.listdir(os.path.join(self.base_path, JOBS_DIR)))
+        # Names of job to traverse. Since job names are unique, calling set
+        # is safe.
+        traversal_set = set(os.listdir(os.path.join(self.base_path, JOBS_DIR)))
+
+        # Move the jobs in the done cache to the back and shuffle both lists.
+        # We still have to check jobs in the cache in case state was manually
+        # updated.
+        traversal = list(traversal_set - self.finished_cache)
+        remaining = list(self.finished_cache)
         random.shuffle(traversal)
+        random.shuffle(remaining)
+
+        traversal += remaining
 
         for name in traversal:
-            if with_cache and self.job_cache.get(name) in [state.DONE, state.FAIL]:
-                continue
-
             path = self._info_path(name)
             if os.path.isfile(path):
                 with open(path) as f:
@@ -114,18 +122,6 @@ class JobDB:
                         yield json.load(f)
                     except json.JSONDecodeError:
                         continue
-
-        if with_cache:
-            for job, job_state in self.job_cache.items():
-                if job_state in [state.DONE, state.FAIL]:
-                    path = self._info_path(name)
-                    if os.path.isfile(path):
-                        with open(path) as f:
-                            try:
-                                yield json.load(f)
-                            except json.JSONDecodeError:
-                                continue
-
 
     def _acquire(self, old_state, new_state):
         """Look for a job in `old_state`, update it to `new_state`, and
@@ -137,43 +133,26 @@ class JobDB:
         Raise a `NotFoundError` if there is no such job.
         """
 
-        job = None
-
-        # Try to find a job in old_state in the job cache.
-        for job_id, state in self.job_cache.items():
-            # If the cache state doesn't match old_state, skip the job
-            if state != old_state:
-                continue
-
-            # Cache can contain old state data. Get the actual data by reading
-            # the db.
-            job = self._read(job_id)
+        for job in self._all(with_cache=True):
             if job['state'] == old_state:
                 break
-            else:
-                # If the cached data was wrong, update the cache.
+            elif job['state'] in [state.DONE, state.FAIL]:
                 with self.cache_lock:
-                    self.job_cache[job_id] = job['state']
+                    self.finished_cache.add(job['name'])
+        else:
+            print('No job in state', old_state)
+            raise NotFoundError()
 
+        job['state'] = new_state
+        self.log(job['name'], 'acquired in state {}'.format(new_state))
+        print(job['name'],
+              'acquired in state {}. Cache size: {}.'.format(new_state, len(self.finished_cache)))
+        with open(self._info_path(job['name']), 'w') as f:
+            json.dump(job, f)
 
-        # If there are no matching jobs in the cache, walk the jobs dir.
-        if job is None:
-            for job in self._all(with_cache=True):
-                if job['state'] == old_state:
-                    job['state'] = new_state
-                    self.log(job['name'], 'acquired in state {}'.format(new_state))
-                    print(job['name'], 'acquired in state {}. Cache size: {}.'.format(new_state, len(self.job_cache)))
-                    with open(self._info_path(job['name']), 'w') as f:
-                        json.dump(job, f)
-                    break
-                else:
-                    with self.cache_lock:
-                        self.job_cache[job['name']] = job['state']
-            else:
-                raise NotFoundError()
-
-        with self.cache_lock:
-            self.job_cache[job['name']] = job['state']
+        if job['state'] not in [state.DONE, state.FAIL]:
+            with self.cache_lock:
+                self.finished_cache.discard(job['name'])
 
         return job
 
