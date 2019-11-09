@@ -169,7 +169,7 @@ def jobs_csv():
     output = StringIO()
     writer = csv.DictWriter(
         output,
-        ['name', 'started', 'state'],
+        ['id', 'name', 'started', 'state'],
     )
     writer.writeheader()
 
