@@ -175,7 +175,8 @@ def jobs_csv():
 
     for job in db._all():
         writer.writerow({
-            'name': job['name'],
+            'id': job['name'],
+            'name': job['config'] and job['config']['hwname'],
             'started': job['started'],
             'state': job['state'],
         })
