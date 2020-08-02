@@ -1,11 +1,11 @@
-FROM python:3-alpine
+FROM python:3
 MAINTAINER Adrian Sampson <asampson@cs.cornell.edu>
 MAINTAINER Rachit Nigam <rnigam@cs.cornell.edu>
 
 # Add OpenSSH and the sshpass utility for Zynq execution. Add curl to enable
 # communication with other containers.
-RUN apk update && \
-    apk add openssh sshpass curl
+RUN apt-get update && \
+    apt-get install -y openssh-client sshpass curl
 
 # We use pipenv for our setup.
 RUN pip3 install pipenv
